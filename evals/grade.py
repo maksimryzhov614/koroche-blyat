@@ -89,9 +89,33 @@ def _lexicon_values(lexicon: Mapping[str, Sequence[str]], key: str) -> Tuple[str
     return tuple(str(item) for item in raw)
 
 
+def _word_continuation(character: str) -> bool:
+    return (
+        character == "_"
+        or character.isalnum()
+        or unicodedata.category(character).startswith("M")
+        or character in ("\u200c", "\u200d")
+    )
+
+
 def _contains_lexicon(text: str, values: Sequence[str]) -> bool:
     normalized = _normalize_analysis(text)
-    return any(_normalize_analysis(value) in normalized for value in values if value)
+    for value in values:
+        needle = _normalize_analysis(value) if value else ""
+        if not needle:
+            continue
+        start = 0
+        while True:
+            index = normalized.find(needle, start)
+            if index < 0:
+                break
+            end = index + len(needle)
+            left = index > 0 and _word_continuation(normalized[index - 1])
+            right = end < len(normalized) and _word_continuation(normalized[end])
+            if not left and not right:
+                return True
+            start = index + 1
+    return False
 
 
 def _fact_position(text: str, fact: Any) -> int:

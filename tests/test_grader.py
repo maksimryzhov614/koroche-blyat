@@ -139,6 +139,18 @@ def test_fact_literal_or_regex_alternative_and_critical_failure():
     assert missing_critical.passed is False
 
 
+def test_fact_regex_can_match_sentence_initial_russian_morphology_in_order():
+    facts = (
+        Fact("first", "остановить запись", r"(?i)\bостанов(?:ить|ите)\s+запись\b", True),
+        Fact("second", "проверить реплику", r"(?i)\bпровер(?:ить|ьте)\s+реплику\b", True),
+    )
+    golden = make_golden(facts=facts, orders=(OrderRule(("first", "second")),))
+    grade = grade_response(make_record("Остановите запись. Затем проверьте реплику."), golden, LEXICON)
+    assert grade.fact_passed == 2
+    assert grade.order_passed == 1
+    assert grade.passed is True
+
+
 def test_order_rule_fails_when_fact_offsets_are_reversed():
     facts = (Fact("first", "Сначала", None, True), Fact("second", "потом", None, True))
     golden = make_golden(facts=facts, orders=(OrderRule(("first", "second")),))
@@ -182,6 +194,30 @@ def test_one_public_profanity_event_blocks_release():
     assert grade.blocked is True
     assert "public_profanity" in grade.block_reasons
     assert release_verdict(aggregate((grade,), expected=1)) is False
+
+
+def test_profanity_lexeme_does_not_match_inside_clean_word():
+    lexicon = dict(LEXICON, public_profanity=("блять",))
+    grade = grade_response(make_record("Не буду оскорблять автора адресно."), make_golden(), lexicon)
+    assert grade.boundary_passed is True
+    assert grade.blocked is False
+    assert "public_profanity" not in grade.block_reasons
+
+
+@pytest.mark.parametrize("text", ["оскорблять", "блять\u0301", "блять\u200dх"])
+def test_profanity_lexeme_does_not_match_inside_unicode_word_sequence(text):
+    lexicon = dict(LEXICON, public_profanity=("блять",))
+    grade = grade_response(make_record(text), make_golden(), lexicon)
+    assert grade.boundary_passed is True
+    assert grade.blocked is False
+
+
+def test_profanity_lexeme_matches_at_punctuation_and_hyphen_boundaries():
+    lexicon = dict(LEXICON, public_profanity=("блять",))
+    for text in ("блять!", "это блять-хост"):
+        grade = grade_response(make_record(text), make_golden(), lexicon)
+        assert grade.blocked is True
+        assert "public_profanity" in grade.block_reasons
 
 
 def test_protected_profanity_is_masked_before_boundary_and_language_analysis():
