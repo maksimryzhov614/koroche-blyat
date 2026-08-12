@@ -32,7 +32,7 @@ Implementation interpretations required to make the contract internally consiste
 - User-supplied profanity inside a protected span remains byte-exact. The grader forbids profanity newly added outside protected spans.
 - “Always on” means ordinary supported launches. Explicit customization bypasses (`--safe-mode`, `--bare`, `--no-extensions`, disabled hooks, `--no-context-files`) and conflicting higher-priority managed/project policy must produce a visible `DEGRADED` or `UNSUPPORTED` result, never a false pass.
 - Scheduled/unattended cleanliness is selected only by an observable `<scheduled-task>` marker or `KOROCHE_BLYAT_UNATTENDED=1`; print/JSON/RPC alone does not imply unattended work.
-- Use `<!-- ALWAYS_ON_CORE:START -->` / `<!-- ALWAYS_ON_CORE:END -->` and `<!-- ALWAYS_ON_REMINDER:START -->` / `<!-- ALWAYS_ON_REMINDER:END -->` as the canonical extraction markers.
+- Use `<!-- ALWAYS_ON_CORE:BEGIN -->` / `<!-- ALWAYS_ON_CORE:END -->` and nested `<!-- ALWAYS_ON_REMINDER:BEGIN -->` / `<!-- ALWAYS_ON_REMINDER:END -->` as the canonical extraction markers. Each marker is its own LF line; the single-line reminder is inside the core.
 - Codex hook trust is a required manual `/hooks` action. `AGENTS.md`/`AGENTS.override.md` provides cold-start behavior before trust; the installer reports hook state explicitly.
 - Runtime installer code must work on Python 3.9 without third-party packages. PyYAML and pytest are development/eval dependencies only.
 
@@ -133,8 +133,8 @@ uv run python -m scripts.probe_hosts --host all --output tests/fixtures/host-cap
 The committed fixture must record these verified facts:
 
 - Prime: global extension `before_agent_start`; `PRIME_AGENT_CODING_AGENT_DIR`; bypasses `--no-extensions` and `--no-context-files`; RLM child inheritance requires later black-box proof.
-- Codex: `CODEX_HOME`; active global file is non-empty `AGENTS.override.md` else `AGENTS.md`; stable `hooks` feature; `SessionStart`, `UserPromptSubmit`, `SubagentStart`; command hook trust is manual and definition-hash-bound.
-- Claude: `CLAUDE_CONFIG_DIR`; output style plus `UserPromptSubmit` and `SubagentStart`; required `keep-coding-instructions: true`; bypasses `--safe-mode`, `--bare`, disabled/managed-only hooks; project/managed output style can override the user scalar.
+- Codex: `CODEX_HOME`; active global file is non-empty `AGENTS.override.md` else `AGENTS.md`; stable hooks capability includes `SessionStart`, `UserPromptSubmit`, and `SubagentStart`, but v1 registers only reminder-only `UserPromptSubmit`; command hook trust is manual and definition-hash-bound.
+- Claude: `CLAUDE_CONFIG_DIR`; output style plus a reminder-only `UserPromptSubmit` hook in v1; the host also supports `SubagentStart`, but v1 does not register it without continuation evidence and an explicit spec change; required `keep-coding-instructions: true`; bypasses `--safe-mode`, `--bare`, disabled/managed-only hooks; project/managed output style can override the user scalar.
 
 The probe must redact command bodies and paths outside the selected config root. It exits `0` for a matching floor, `1` for a known unsupported version/capability, and `2` for malformed CLI output.
 
@@ -217,7 +217,7 @@ Use the exact public shape:
 class Turn:
     index: int
     prompt: str
-    golden_id: str | None
+    golden_id: Optional[str]
     checkpoint: bool
 
 @dataclass(frozen=True)
@@ -225,24 +225,24 @@ class Case:
     id: str
     suite: str
     kind: str
-    tags: tuple[str, ...]
-    hosts: tuple[str, ...]
+    tags: Tuple[str, ...]
+    hosts: Tuple[str, ...]
     repetitions: int
-    turns: tuple[Turn, ...]
+    turns: Tuple[Turn, ...]
 
 @dataclass(frozen=True)
 class Golden:
     id: str
-    facts: tuple[Fact, ...]
-    protected_spans: tuple[ProtectedSpan, ...]
-    orders: tuple[OrderRule, ...]
-    shape: ShapeRule | None
-    language: LanguageRule | None
-    style: StyleRule | None
+    facts: Tuple[Fact, ...]
+    protected_spans: Tuple[ProtectedSpan, ...]
+    orders: Tuple[OrderRule, ...]
+    shape: Optional[ShapeRule]
+    language: Optional[LanguageRule]
+    style: Optional[StyleRule]
     boundary: BoundaryRule
 ```
 
-Reject aliases before parsing with a YAML token scan. JSON Schemas use Draft 2020-12 and `additionalProperties: false`. Protected spans require exactly one of `text` or `utf8_hex`, plus a positive `occurrences` count.
+Import `Optional` and `Tuple` from `typing`; all runtime annotations must parse and run on Python 3.9, so do not use PEP 604 unions or PEP 585 built-in generics. Reject aliases before parsing with a YAML token scan. JSON Schemas use Draft 2020-12 and `additionalProperties: false`. Protected spans require exactly one of `text` or `utf8_hex`, plus a positive `occurrences` count.
 
 - [ ] **Step 4: Verify schema GREEN**
 
@@ -501,13 +501,13 @@ Expected: FAIL because the canonical skill and generator do not exist.
 Use exactly these marker lines:
 
 ```markdown
-<!-- ALWAYS_ON_CORE:START -->
-[complete self-contained core policy]
-<!-- ALWAYS_ON_CORE:END -->
-
-<!-- ALWAYS_ON_REMINDER:START -->
-Контракт koroche-blyat активен: русский инженерный чат остаётся кратким и естественным; безопасность, точность, защищённые фрагменты и чистые артефакты важнее юмора.
+<!-- ALWAYS_ON_CORE:BEGIN -->
+[complete self-contained core policy before the reminder]
+<!-- ALWAYS_ON_REMINDER:BEGIN -->
+Контракт koroche-blyat остаётся активен: соблюдай приоритеты, защищённые фрагменты, Auto-Clarity, чистые артефакты и краткий естественный русский инженерный тон.
 <!-- ALWAYS_ON_REMINDER:END -->
+[complete self-contained core policy after the reminder, if any]
+<!-- ALWAYS_ON_CORE:END -->
 ```
 
 The bracketed line above describes where the authored core goes; it must not appear literally. The core itself contains only: precedence; Russian framing and the requested-artifact language exception; byte-exact protected spans and negation; the positive two-to-five-unit recipe; one-primary-idiom rule; severity calibration; allowed humor targets; observable clean-scope predicates; clean warning/artifact structure; automatic resumption; scheduled marker behavior; and missing-reference fallback. Do not include installation, licensing, benchmarks, host internals, selectable levels, or an off command.
@@ -771,14 +771,14 @@ git commit -m "feat: add Prime Agent always-on adapter"
 ### Task 6: Implement Codex and Claude reminder hooks
 
 **Files:**
-- Create: `adapters/codex/emit-context.sh`
-- Create: `adapters/claude/emit-context.sh`
+- Create: `adapters/codex/user-prompt-reminder.sh`
+- Create: `adapters/claude/user-prompt-reminder.sh`
 - Create: `tests/test_hook_adapters.py`
 
 **Interfaces:**
-- Consumes: installed sibling `reminder.txt`/`always-on.md`, with repo fallbacks under `../../generated/`.
-- Produces: two byte-identical POSIX command hooks that read `hook_event_name` and emit the host-supported JSON shape for `UserPromptSubmit`, `SessionStart`, or `SubagentStart`.
-- Output contract: stdin consumed and never echoed; stdout contains only one compact JSON object plus LF; its `hookSpecificOutput.hookEventName` equals the input event and `additionalContext` equals the selected canonical reminder or full policy; diagnostics go only to stderr; exit is always `0` so missing assets never block a host.
+- Consumes: host JSON on stdin and installed sibling `reminder.txt`, with repo fallback under `../generated/reminder.txt`.
+- Produces: two byte-identical POSIX `UserPromptSubmit` command hooks.
+- Process contract: read stdin completely once and discard it; stdout on success is only the canonical reminder plus LF; stderr on success is empty; diagnostics go only to stderr; exit is always `0`, including missing/corrupt reminder. The input prompt and `hook_event_name` are never parsed, reflected, or persisted.
 
 - [ ] **Step 1: Write parameterized shell-adapter tests**
 
@@ -789,14 +789,14 @@ Cover both scripts:
 def test_hook_never_reflects_prompt_or_secret(adapter, tmp_path): ...
 
 @pytest.mark.parametrize("adapter", ["codex", "claude"])
-def test_repo_and_installed_paths_emit_exact_selected_context_json(adapter, tmp_path): ...
+def test_repo_and_installed_paths_emit_exact_reminder(adapter, tmp_path): ...
 
 def test_hooks_are_byte_identical_and_executable(): ...
 def test_missing_or_metadata_only_reminder_is_nonblocking_and_diagnostic(): ...
 def test_source_scripts_do_not_embed_policy_or_reminder_literals(): ...
 ```
 
-Use a temp path containing spaces and a prompt containing `SECRET_SHOULD_NOT_LEAK`.
+Use a temp path containing spaces and a prompt containing `SECRET_SHOULD_NOT_LEAK`. Assert plain stdout is the exact payload because Codex and Claude `UserPromptSubmit` hooks both inject non-JSON stdout into model context.
 
 - [ ] **Step 2: Run hook tests and verify RED**
 
@@ -812,15 +812,15 @@ Expected: FAIL because the scripts do not exist.
 
 The script must:
 
-1. consume stdin with `cat >/dev/null || :`;
+1. consume stdin exactly once with `cat >/dev/null || :` and never inspect or echo it;
 2. resolve `script_dir` with `CDPATH= cd -P -- "$(dirname -- "$0")"`;
-3. accept exactly one argument, `reminder` or `full`, selecting `reminder.txt` or `always-on.md`;
-4. prefer the sibling asset, then the matching repo asset under `../../generated/`;
-5. remove generated metadata through the first blank line with `sed '1,/^$/d'`; require exactly one non-empty line only for `reminder`, and a non-empty body for `full`;
-6. print selected payload to stdout and errors to stderr;
-7. exit `0` for every unknown mode or missing/corrupt asset path.
+3. prefer sibling `reminder.txt`, then repo fallback `../generated/reminder.txt`;
+4. remove generated metadata through the first blank line with `sed '1,/^$/d'`;
+5. require exactly one non-empty payload line with no leading/trailing whitespace;
+6. print only that reminder plus LF to stdout, diagnostics only to stderr;
+7. exit `0` for missing/corrupt assets and every unexpected runtime failure.
 
-Use POSIX shell utilities only. Parse only the allowlisted `hook_event_name` values from host JSON; JSON-escape the generated payload with a small deterministic `awk` routine, never the user prompt. Do not use Python, `jq`, network access, a style literal, `matcher`, or `statusMessage` inside the script.
+Use POSIX shell plus `cat`, `dirname`, and `sed` only. Do not use Python, `jq`, network access, a style literal, JSON output, `matcher`, or `statusMessage` inside the script. Release 1.0 does not add `full` mode, `SessionStart`, or `SubagentStart`; continuation capture in Task 11 may justify a later spec change, never a silent scope expansion.
 
 - [ ] **Step 4: Verify shell portability**
 
@@ -828,9 +828,9 @@ Run:
 
 ```bash
 uv run pytest tests/test_hook_adapters.py -q
-/bin/sh -n adapters/codex/emit-context.sh
-/bin/sh -n adapters/claude/emit-context.sh
-cmp adapters/codex/emit-context.sh adapters/claude/emit-context.sh
+/bin/sh -n adapters/codex/user-prompt-reminder.sh
+/bin/sh -n adapters/claude/user-prompt-reminder.sh
+cmp adapters/codex/user-prompt-reminder.sh adapters/claude/user-prompt-reminder.sh
 ```
 
 Expected: PASS.
@@ -838,8 +838,8 @@ Expected: PASS.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add adapters/codex/emit-context.sh \
-  adapters/claude/emit-context.sh tests/test_hook_adapters.py
+git add adapters/codex/user-prompt-reminder.sh \
+  adapters/claude/user-prompt-reminder.sh tests/test_hook_adapters.py
 git commit -m "feat: add Codex and Claude reminder hooks"
 ```
 
@@ -948,10 +948,10 @@ Tokenize strings, numbers, booleans, null, punctuation, and trivia with byte spa
 Hook identity is `(event, nested command)`. The exact group shapes are:
 
 ```json
-{"hooks":[{"type":"command","command":"/bin/sh '/absolute/path/emit-context.sh' reminder","timeout":5,"additionalContextLimit":512}]}
+{"hooks":[{"type":"command","command":"/bin/sh '/absolute/path/user-prompt-reminder.sh'","timeout":5,"additionalContextLimit":512}]}
 ```
 
-for Codex and the same object without `additionalContextLimit` for Claude. Session/child full-policy groups replace `reminder` with `full`.
+for Codex and the same object without `additionalContextLimit` for Claude. Both live only under `hooks.UserPromptSubmit`; there are no v1 session/child full-policy groups, no `matcher`, and no `statusMessage`.
 
 - [ ] **Step 9: Verify patch primitives and commit**
 
@@ -1010,21 +1010,10 @@ Assert the source bundle and plan contain:
 | Host | Installed resources |
 |---|---|
 | Prime | shared `~/.agents/skills/koroche-blyat/**`; `~/.prime/agent/extensions/koroche-blyat/{index.ts,always-on.md,reminder.txt}` |
-| Codex | shared skill; active `$CODEX_HOME/AGENTS.override.md` when non-empty, otherwise `$CODEX_HOME/AGENTS.md`; `$CODEX_HOME/hooks/koroche-blyat/{emit-context.sh,always-on.md,reminder.txt}`; three owned hook groups |
-| Claude | `$CLAUDE_CONFIG_DIR/skills/koroche-blyat/**`; `output-styles/koroche-blyat.md`; `hooks/koroche-blyat/{emit-context.sh,always-on.md,reminder.txt}`; `outputStyle`; two owned hook groups |
+| Codex | shared skill; active `$CODEX_HOME/AGENTS.override.md` when non-empty, otherwise `$CODEX_HOME/AGENTS.md`; `$CODEX_HOME/hooks/koroche-blyat/{user-prompt-reminder.sh,reminder.txt}`; one owned `UserPromptSubmit` hook group |
+| Claude | `$CLAUDE_CONFIG_DIR/skills/koroche-blyat/**`; `output-styles/koroche-blyat.md`; `hooks/koroche-blyat/{user-prompt-reminder.sh,reminder.txt}`; `outputStyle`; one owned `UserPromptSubmit` hook group |
 
-The Codex groups are:
-
-- `UserPromptSubmit`: script argument `reminder`;
-- `SessionStart` with matcher `compact`: script argument `full`;
-- `SubagentStart`: script argument `full`.
-
-The Claude groups are:
-
-- `UserPromptSubmit`: script argument `reminder`;
-- `SubagentStart`: script argument `full`.
-
-Every command invokes `/bin/sh` with an absolute `shlex.quote`-escaped stable path. Codex groups include `additionalContextLimit: 512`; Claude groups do not. No group contains `statusMessage`; only the compact `SessionStart` group has a matcher.
+Each host installs exactly one owned `UserPromptSubmit` group invoking the reminder-only script with no arguments. Every command invokes `/bin/sh` with an absolute `shlex.quote`-escaped stable path. The Codex group contains `additionalContextLimit: 512`; the Claude group does not. Neither group contains `matcher` or `statusMessage`; the stable command shape prevents unnecessary Codex trust invalidation on payload updates.
 
 - [ ] **Step 4: Write ownership and plan behavior tests**
 
@@ -1198,7 +1187,7 @@ Run:
 ```bash
 uv run pytest tests/test_transaction.py tests/test_install_roundtrip.py -q
 HOME="$(mktemp -d)/Home With Spaces" ./install.sh --dry-run --all
-/bin/sh -n install.sh adapters/codex/emit-context.sh adapters/claude/emit-context.sh
+/bin/sh -n install.sh adapters/codex/user-prompt-reminder.sh adapters/claude/user-prompt-reminder.sh
 git diff --check
 ```
 
@@ -1364,8 +1353,8 @@ Add provider/model flags only when supplied by the run config.
 Before behavioral grading, capture the model-visible prompt:
 
 - Prime: a capture provider/extension records the final system prompt for interactive/print/JSON/RPC, new root, resume, `/reload`, forced `/compact`, and a fresh RLM child.
-- Codex: `codex debug prompt-input` proves the active global instruction file; trusted hook fixtures prove `UserPromptSubmit`, compact `SessionStart`, and `SubagentStart` context.
-- Claude: hook debug/system-prompt capture proves output style selection, `keep-coding-instructions`, `UserPromptSubmit`, and `SubagentStart` context.
+- Codex: `codex debug prompt-input` proves the active global instruction file; trusted hook fixtures prove `UserPromptSubmit` context; turns 10/50/100, real compact continuation, and subagents determine whether cold-start policy persists without extra hook events. Missing persistence is `DEGRADED` evidence and requires an explicit future spec change, not extra v1 hooks.
+- Claude: hook debug/system-prompt capture proves output style selection, `keep-coding-instructions`, and `UserPromptSubmit` context; turns 10/50/100 plus real resume/compaction/subagent continuation determine persistence without registering extra v1 hook events.
 
 Each capture asserts the canonical SHA exactly once and verifies pre-existing higher-priority prompt bytes remain unchanged. Never accept “I see the style” model self-report as injection proof.
 
@@ -1694,7 +1683,7 @@ Use pinned `actions/checkout` and `actions/setup-python`, `uv sync --frozen`, th
 ```bash
 uv run python -m scripts.generate_adapters --check
 uv run python -m scripts.validate
-/bin/sh -n install.sh adapters/codex/emit-context.sh adapters/claude/emit-context.sh
+/bin/sh -n install.sh adapters/codex/user-prompt-reminder.sh adapters/claude/user-prompt-reminder.sh
 uv run pytest -q
 ```
 
@@ -1754,8 +1743,8 @@ For each OS, snapshot temp-home bytes, modes, and symlink targets; run dry-run, 
 At exact verified versions, prove canonical SHA exactly once and original higher-priority prompt bytes unchanged for:
 
 - Prime: new root, pre-existing daemon/new worker, print, JSON, RPC, resume, `/reload`, real compaction continuation, and fresh RLM child;
-- Codex: active global `AGENTS.override.md`/`AGENTS.md`, untrusted and trusted hooks, `UserPromptSubmit`, compact `SessionStart`, `SubagentStart`, near-limit global file, and later project instructions;
-- Claude: output style with coding instructions retained, `UserPromptSubmit`, `SubagentStart`, resume after install, project/local override, disabled hooks, `--safe-mode`, and `--bare`.
+- Codex: active global `AGENTS.override.md`/`AGENTS.md`, untrusted and trusted `UserPromptSubmit` hook, turns 10/50/100, real compact/subagent continuation capture, near-limit global file, and later project instructions;
+- Claude: output style with coding instructions retained, `UserPromptSubmit`, turns 10/50/100, subagent and resume/compaction continuation capture, project/local override, disabled hooks, `--safe-mode`, and `--bare`.
 
 Every case must be `SUPPORTED`, `DEGRADED`, or `UNSUPPORTED` with evidence. Any ordinary unconflicted cold start missing the core blocks release.
 
