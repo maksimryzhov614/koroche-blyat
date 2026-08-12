@@ -1,0 +1,66 @@
+**Предупреждение:** не выполняйте `rm -rf /var/lib/app` во время инцидента без подтверждения пути и проверенной резервной копии. Команда необратимо удалит данные приложения, включая потенциально необходимые журналы, состояние и конфигурацию. Сначала подтвердите, что путь относится именно к целевому хосту и приложению, остановите запись данных и создайте резервную копию.
+
+**Безопасный план:**
+
+1. Зафиксировать хост и целевой путь:
+   ```bash
+   hostname -f
+   readlink -f -- /var/lib/app
+   sudo stat -- /var/lib/app
+   sudo findmnt -T /var/lib/app
+   sudo du -sh -- /var/lib/app
+   sudo ls -la -- /var/lib/app
+   ```
+
+   Остановиться, если путь является mount point, симлинком, неожиданно разрешается в другой каталог или размер/содержимое не соответствуют приложению.
+
+2. Остановить приложение и фоновые задания, чтобы данные не менялись:
+   ```bash
+   sudo systemctl stop app.service
+   sudo systemctl is-active app.service
+   ```
+
+   Название сервиса нужно заменить на фактическое. Не продолжать, если сервис не остановлен.
+
+3. Сделать резервную копию с метаданными:
+   ```bash
+   backup="/var/backups/app-$(date -u +%Y%m%dT%H%M%SZ).tar.gz"
+
+   sudo tar --xattrs --acls --numeric-owner \
+     -czf "$backup" -C /var/lib app
+   sudo sha256sum "$backup" | sudo tee "$backup.sha256"
+   sudo tar -tzf "$backup" >/dev/null
+   sudo ls -lh -- "$backup" "$backup.sha256"
+   ```
+
+   Резервная копия должна находиться на отдельном диске или удалённом хранилище, а не только на том же filesystem.
+
+4. Проверить, что архив можно прочитать и он содержит ожидаемые данные:
+   ```bash
+   sudo tar -tzf "$backup" | sed -n '1,30p'
+   sudo sha256sum -c "$backup.sha256"
+   ```
+
+5. Вместо немедленного удаления сначала переименовать каталог, чтобы сохранить возможность отката:
+   ```bash
+   quarantine="/var/lib/app.quarantine.$(date -u +%Y%m%dT%H%M%SZ)"
+
+   sudo mv -- /var/lib/app "$quarantine"
+   sudo mkdir -- /var/lib/app
+   sudo chown --reference="$quarantine" /var/lib/app
+   sudo chmod --reference="$quarantine" /var/lib/app
+   ```
+
+6. Запустить приложение и проверить health-check, логи и ключевые операции:
+   ```bash
+   sudo systemctl start app.service
+   sudo systemctl --no-pager --full status app.service
+   sudo journalctl -u app.service -n 100 --no-pager
+   ```
+
+7. Удалять quarantine только после подтверждения восстановления работы, валидности резервной копии и согласования с ответственным:
+   ```bash
+   sudo rm -rf --one-file-system -- "$quarantine"
+   ```
+
+Ключевые защитные меры: использовать абсолютные пути, `--` перед путём, проверять `readlink -f` и mount point, не применять маски и переменные без проверки, а удаление выполнять только после успешной проверки резервной копии и восстановления сервиса.
