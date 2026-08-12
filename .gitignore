@@ -1,3 +1,11 @@
 .DS_Store
 .worktrees/
 .superpowers/
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+*.py[cod]
+.venv/
+dist/
+evals/snapshots/*
+!evals/snapshots/.gitkeep
