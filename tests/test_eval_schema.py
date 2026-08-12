@@ -7,6 +7,7 @@ import pytest
 import yaml
 from jsonschema import Draft202012Validator, ValidationError
 
+import evals.grade as grade_mod
 import evals.schema as schema_mod
 
 FIXTURES = Path(__file__).parent / "fixtures" / "evals"
@@ -44,7 +45,7 @@ def test_valid_fixtures_load_and_public_shapes_are_frozen():
     "unknown-key", "yaml-alias", "custom-tag", "duplicate-id",
     "bad-regex", "orphan-golden", "missing-persistence-checkpoint",
 ])
-def test_invalid_fixture_is_rejected_for_the_declared_reason(mutation, tmp_path):
+def test_invalid_fixture_is_rejected(mutation, tmp_path):
     case_text = (FIXTURES / "valid-case.yaml").read_text(encoding="utf-8")
     golden_text = (FIXTURES / "valid-golden.yaml").read_text(encoding="utf-8")
     case_path = tmp_path / "case.yaml"
@@ -156,8 +157,7 @@ def test_all_json_schemas_are_draft_2020_12_and_reject_unknown_top_level_keys():
             Draft202012Validator(document).validate({"unexpected": True})
 
 
-def test_runtime_annotations_parse_on_python39_without_pep604_or_builtin_generics():
-    source = (Path(schema_mod.__file__)).read_text(encoding="utf-8")
+def _runtime_annotation_violations(source):
     tree = ast.parse(source)
     annotations = []
     for node in ast.walk(tree):
@@ -167,13 +167,31 @@ def test_runtime_annotations_parse_on_python39_without_pep604_or_builtin_generic
             annotations.extend(arg.annotation for arg in node.args.args if arg.annotation is not None)
             if node.returns is not None:
                 annotations.append(node.returns)
-    assert not any(isinstance(part, ast.BinOp) and isinstance(part.op, ast.BitOr) for ann in annotations for part in ast.walk(ann))
-    builtin_generics = {"list", "dict", "tuple", "set", "frozenset", "type"}
-    assert not any(
-        isinstance(part, ast.Subscript) and isinstance(part.value, ast.Name) and part.value.id in builtin_generics
-        for ann in annotations
-        for part in ast.walk(ann)
+    pep604 = any(
+        isinstance(part, ast.BinOp) and isinstance(part.op, ast.BitOr)
+        for annotation in annotations
+        for part in ast.walk(annotation)
     )
+    builtin_generics = {"list", "dict", "tuple", "set", "frozenset", "type"}
+    pep585 = any(
+        isinstance(part, ast.Subscript)
+        and isinstance(part.value, ast.Name)
+        and part.value.id in builtin_generics
+        for annotation in annotations
+        for part in ast.walk(annotation)
+    )
+    return pep604, pep585
+
+
+def test_task1_runtime_annotations_parse_on_python39_without_pep604_or_builtin_generics():
+    for module in (schema_mod, grade_mod):
+        source = Path(module.__file__).read_text(encoding="utf-8")
+        assert _runtime_annotation_violations(source) == (False, False), module.__file__
+
+
+def test_python39_annotation_guard_detects_pep604_and_pep585():
+    assert _runtime_annotation_violations("def f(value: str | None) -> None:\n    pass\n") == (True, False)
+    assert _runtime_annotation_violations("def f(value: list[str]) -> None:\n    pass\n") == (False, True)
 
 
 def test_non_persistence_case_may_have_no_checkpoints(tmp_path):
