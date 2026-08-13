@@ -1,0 +1,22 @@
+{
+  "name": "koroche-blyat",
+  "owner": {
+    "name": "Koroche Blyat contributors",
+    "url": "https://github.com/maksimryzhov614/koroche-blyat"
+  },
+  "metadata": {
+    "description": "Русский инженерный голос: краткие живые ответы, чистые коммиты и артефакты, калибровка тона по тяжести инцидента. 18+",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "koroche-blyat",
+      "description": "Agent Skill для русской технической работы: отладка, ревью, эксплуатация, инциденты. Живой инженерный тон в разговоре при полной чистоте кода, коммитов и любых сохраняемых артефактов. Содержит ненормативную лексику.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/koroche-blyat"
+      ]
+    }
+  ]
+}
