@@ -225,16 +225,17 @@ def test_provenance_detects_redistributed_license_drift(tmp_path):
 
 # --- docs claims -------------------------------------------------------------
 
-def test_docs_claims_is_silent_while_task_14_documents_do_not_exist(tmp_path):
-    """Task 13 must pass before Task 14 writes README.md.
+def test_docs_claims_is_silent_when_a_public_document_is_absent(tmp_path):
+    """An absent public document is not a violation.
 
-    The plan runs `scripts.validate` at the end of Task 13 and expects PASS,
-    but README.md and CHANGELOG.md are only created in Task 14. An absent
-    document is therefore not a violation; an unsupported claim inside a
-    present one is.
+    This is what let Task 13 pass before Task 14 wrote README.md: the plan
+    runs `scripts.validate` at the end of Task 13, while the documents only
+    appear in Task 14. The documents exist now, so the test removes them to
+    keep exercising the rule rather than the moment in history.
     """
     root = _tracked_copy(tmp_path)
-    assert not (root / "README.md").exists()
+    for name in ("README.md", "CHANGELOG.md"):
+        (root / name).unlink()
     assert _checks(validate_repo(root, ["docs-claims"]), "docs-claims") == []
 
 

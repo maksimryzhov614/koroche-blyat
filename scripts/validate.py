@@ -36,7 +36,7 @@ ALLOWLIST = "release/PACKAGE_FILES.txt"
 # evals/snapshots is model output, not something this repository authors, so
 # byte-level style rules do not apply to it.
 TEXT_ROOTS = (
-    "skills", "adapters", "scripts", "tests", "release",
+    "skills", "adapters", "scripts", "tests", "release", ".github",
     "evals/cases", "evals/goldens", "evals/schemas",
 )
 TEXT_FILES = (

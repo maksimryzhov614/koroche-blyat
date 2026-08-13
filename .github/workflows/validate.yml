@@ -1,0 +1,77 @@
+name: validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHONUTF8: "1"
+  LC_ALL: C.UTF-8
+  LANG: C.UTF-8
+  SOURCE_DATE_EPOCH: "1786500000"
+
+jobs:
+  validate:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python: ["3.9", "3.13"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
+
+      - name: Install locked development dependencies
+        run: uv sync --frozen
+
+      - name: Generated adapters match the canonical skill
+        run: uv run python -m scripts.generate_adapters --check
+
+      - name: Offline repository validation
+        run: uv run python -m scripts.validate
+
+      # `sh -n a b c` parses only the first file and turns the rest into
+      # positional parameters, so each script needs its own invocation.
+      - name: Shell syntax
+        run: |
+          /bin/sh -n install.sh
+          /bin/sh -n adapters/codex/user-prompt-reminder.sh
+          /bin/sh -n adapters/claude/user-prompt-reminder.sh
+          cmp adapters/codex/user-prompt-reminder.sh adapters/claude/user-prompt-reminder.sh
+
+      - name: Full test suite
+        run: uv run pytest -q
+
+      - name: Build the release twice and compare bytes
+        run: |
+          uv run python -m scripts.package_release --version "$(cat VERSION)" --output-dir dist-one
+          uv run python -m scripts.package_release --version "$(cat VERSION)" --output-dir dist-two
+          cmp dist-one/koroche-blyat-"$(cat VERSION)".tar.gz dist-two/koroche-blyat-"$(cat VERSION)".tar.gz
+          cmp dist-one/koroche-blyat-"$(cat VERSION)".zip dist-two/koroche-blyat-"$(cat VERSION)".zip
+          cmp dist-one/SHA256SUMS dist-two/SHA256SUMS
+
+      - name: Unpack the candidate and install it under an isolated HOME
+        run: |
+          set -eu
+          # Resolve VERSION before any cd: a command substitution inside the
+          # cd argument is expanded in the *current* directory, so a relative
+          # path there would read the wrong file.
+          version="$(cat VERSION)"
+          isolated="$(mktemp -d)/Home With Spaces"
+          mkdir -p unpacked "$isolated"
+          tar -xzf "dist-one/koroche-blyat-$version.tar.gz" -C unpacked
+          cd "unpacked/koroche-blyat-$version"
+          HOME="$isolated" ./install.sh --dry-run --all > /dev/null
+          test -z "$(find "$isolated" -mindepth 1)" || { echo "dry run wrote to HOME"; exit 1; }
