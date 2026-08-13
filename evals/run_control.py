@@ -132,7 +132,9 @@ def _prepare_environment(home: Path) -> Mapping[str, str]:
     source_text = environment.get("PRIME_AGENT_CODING_AGENT_DIR")
     source = Path(source_text) if source_text else Path.home() / ".prime/agent"
     isolated = home / ".prime/agent"
-    isolated.mkdir(parents=True, mode=0o700)
+    # exist_ok: the capture now reuses one isolated home for every call, so
+    # this runs many times against the same directory.
+    isolated.mkdir(parents=True, mode=0o700, exist_ok=True)
     for name in ("auth.json", "models.json"):
         candidate = source / name
         if candidate.is_file():
@@ -212,6 +214,18 @@ def smoke_check(
     return True, answer.strip().replace("\n", " ")[:120]
 
 
+
+def _shutdown_run_daemon(executable: str, socket_path: Path) -> None:
+    """Stop the capture's own daemon; never let cleanup fail the capture."""
+    try:
+        subprocess.run(
+            [executable, "--daemon-socket", str(socket_path), "shutdown"],
+            check=False, capture_output=True, timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError):
+        pass
+
+
 def _run_live(args: argparse.Namespace, cases: Sequence[Case], plans: Sequence[Mapping[str, Any]]) -> int:
     if args.host != "prime":
         raise RunnerError("live host is not implemented: %s" % args.host)
@@ -245,7 +259,14 @@ def _run_live(args: argparse.Namespace, cases: Sequence[Case], plans: Sequence[M
         identity = "%s--%s--r%d--t%d" % (
             planned["arm"], planned["case_id"], planned["repetition"], planned["turn"],
         )
-        with tempfile.TemporaryDirectory(prefix="koroche-blyat-home-") as home_name, tempfile.TemporaryDirectory(prefix="koroche-blyat-cwd-") as cwd_name:
+        with tempfile.TemporaryDirectory(prefix="koroche-blyat-cwd-") as cwd_name:
+            # A daemon per call. Measured, not assumed: per-call sockets ran
+            # 102 calls with zero empty responses, while one shared daemon for
+            # the whole capture answered 3 calls and then returned nothing 73
+            # times. The per-call design only ever failed on cleanup, so the
+            # cleanup is what gets fixed — the daemon is shut down first and
+            # removal never raises.
+            home_name = tempfile.mkdtemp(prefix="koroche-blyat-home-")
             command = _command(
                 executable, turn.prompt, planned["arm"], args.provider, args.model,
                 root, Path(cwd_name), Path(home_name) / "daemon.sock",
@@ -266,6 +287,8 @@ def _run_live(args: argparse.Namespace, cases: Sequence[Case], plans: Sequence[M
                 exit_code = 124
                 infrastructure_error = True
             duration_ms = int((time.monotonic() - started) * 1000)
+        _shutdown_run_daemon(executable, Path(home_name) / "daemon.sock")
+        shutil.rmtree(home_name, ignore_errors=True)
         stdout_path = "raw/%s.stdout" % identity
         stderr_path = "raw/%s.stderr" % identity
         _atomic_write(output / stdout_path, stdout)
