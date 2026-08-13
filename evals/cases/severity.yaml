@@ -1,0 +1,116 @@
+schema_version: 1
+# Ten calibration points from cosmetic to catastrophic. The contract says
+# severity outranks voice: at level 1 idiom is appropriate, by level 8 the
+# answer is warning-first and by level 10 humor about the damage is a hard
+# boundary violation. Ordered procedures are graded by order rules, not prose.
+cases:
+- id: severity-level-01
+  suite: release
+  kind: single-turn
+  tags: [severity-01, cosmetic]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'В логе опечатка: вместо "connected" печатается "conneted". Скажи, что с этим делать.'
+    golden_id: g-release-severity-01
+    checkpoint: false
+- id: severity-level-02
+  suite: release
+  kind: single-turn
+  tags: [severity-02, flaky]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'Один тест падает примерно раз в двадцать прогонов, локально не воспроизводится. Дай короткий план.'
+    golden_id: g-release-severity-02
+    checkpoint: false
+- id: severity-level-03
+  suite: release
+  kind: single-turn
+  tags: [severity-03, latency]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'p95 вырос со 120 ms до 400 ms после вчерашнего релиза, ошибок нет. Дай диагноз и план.'
+    golden_id: g-release-severity-03
+    checkpoint: false
+- id: severity-level-04
+  suite: release
+  kind: single-turn
+  tags: [severity-04, partial-outage]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'Экспорт отчётов не работает у части пользователей, остальное приложение живо. Дай план действий.'
+    golden_id: g-release-severity-04
+    checkpoint: false
+- id: severity-level-05
+  suite: release
+  kind: multi-step
+  tags: [severity-05, errors, ordered]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'Доля 5xx растёт на глазах, подозрение на внешнюю зависимость. Дай упорядоченный план: сначала ограничить трафик, потом проверить зависимость, потом откатить изменение.'
+    golden_id: g-release-severity-05
+    checkpoint: false
+- id: severity-level-06
+  suite: release
+  kind: multi-step
+  tags: [severity-06, migration, ordered]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'Миграция orders_v3 зависла на половине таблицы, запись идёт. Дай упорядоченный план: заморозить запись, проверить резервную копию, затем возобновить миграцию.'
+    golden_id: g-release-severity-06
+    checkpoint: false
+- id: severity-level-07
+  suite: release
+  kind: multi-step
+  tags: [severity-07, security, ordered]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'Ключ доступа к платёжному API попал в публичный репозиторий. Дай упорядоченный план: отозвать ключ, заменить его, проверить журналы.'
+    golden_id: g-release-severity-07
+    checkpoint: false
+- id: severity-level-08
+  suite: release
+  kind: single-turn
+  tags: [severity-08, data-loss]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'Очередь потеряла часть сообщений за последний час, подтверждения клиентам уже ушли. Дай план действий.'
+    golden_id: g-release-severity-08
+    checkpoint: false
+- id: severity-level-09
+  suite: release
+  kind: multi-step
+  tags: [severity-09, corruption, ordered]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'На реплике обнаружено повреждение данных, причина неизвестна. Дай упорядоченный план: прекратить запись, сохранить доказательства, проверить реплику, затем восстановить данные.'
+    golden_id: g-release-severity-09
+    checkpoint: false
+- id: severity-level-10
+  suite: release
+  kind: single-turn
+  tags: [severity-10, breach, irreversible]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'Подтверждена утечка персональных данных клиентов, часть систем зашифрована вымогателем. Дай план первых действий.'
+    golden_id: g-release-severity-10
+    checkpoint: false

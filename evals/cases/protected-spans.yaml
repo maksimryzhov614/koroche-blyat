@@ -1,0 +1,222 @@
+schema_version: 1
+# One case per protected-data category. Every prompt says "ровно" so the exact
+# occurrence count is something the user actually asked for, not a trap the
+# grader invented. Unicode edges (NFC/NFD, NBSP, ZWJ, confusable) are declared
+# as utf8_hex in the goldens so no editor or normalizer can silently rewrite
+# the fixture.
+cases:
+- id: protected-fenced-code
+  suite: release
+  kind: single-turn
+  tags: [protected, code]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: |-
+      Объясни, что делает эта функция, и повтори её ровно один раз без изменений:
+
+      ```python
+      def f(x):
+          return x * 2
+      ```
+    golden_id: g-protected-fenced-code
+    checkpoint: false
+- id: protected-inline-code
+  suite: release
+  kind: single-turn
+  tags: [protected, code]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'Объясни, зачем нужен флаг `--dry-run`, и приведи его ровно один раз в таком же виде.'
+    golden_id: g-protected-inline-code
+    checkpoint: false
+- id: protected-shell-argv
+  suite: release
+  kind: single-turn
+  tags: [protected, shell]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'Скажи, что сделает эта команда, и повтори её ровно один раз дословно: git push --force-with-lease origin main'
+    golden_id: g-protected-shell-argv
+    checkpoint: false
+- id: protected-api-names
+  suite: release
+  kind: single-turn
+  tags: [protected, api]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'Объясни разницу между removeEventListener и AbortController, назвав каждое имя ровно один раз и точно так же, как здесь.'
+    golden_id: g-protected-api-names
+    checkpoint: false
+- id: protected-exact-error
+  suite: release
+  kind: single-turn
+  tags: [protected, error]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'Дай диагноз по ошибке и приведи её ровно один раз дословно: TypeError: Cannot read properties of undefined (reading ''map'')'
+    golden_id: g-protected-exact-error
+    checkpoint: false
+- id: protected-log-line
+  suite: release
+  kind: single-turn
+  tags: [protected, logs]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'Скажи, о чём эта строка лога, и процитируй её ровно один раз без изменений: 2026-08-12T04:15:09Z WARN pool exhausted waiting=37'
+    golden_id: g-protected-log-line
+    checkpoint: false
+- id: protected-url
+  suite: release
+  kind: single-turn
+  tags: [protected, url]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'Скажи, куда вести дежурного, и укажи ссылку ровно один раз без изменений: https://example.invalid/runbook'
+    golden_id: g-protected-url
+    checkpoint: false
+- id: protected-sha256
+  suite: release
+  kind: single-turn
+  tags: [protected, hash]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'Скажи, как сверить артефакт, и приведи ожидаемую сумму ровно один раз без изменений: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+    golden_id: g-protected-sha256
+    checkpoint: false
+- id: protected-version
+  suite: release
+  kind: single-turn
+  tags: [protected, version]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'Скажи, стоит ли обновляться, и назови версию ровно один раз точно так же: 0.147.0'
+    golden_id: g-protected-version
+    checkpoint: false
+- id: protected-port
+  suite: release
+  kind: single-turn
+  tags: [protected, port]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'Health-check стучится не туда. Объясни причину и назови нужный порт ровно один раз: 8081'
+    golden_id: g-protected-port
+    checkpoint: false
+- id: protected-ip
+  suite: release
+  kind: single-turn
+  tags: [protected, network]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'Скажи, что проверить в первую очередь, и назови адрес ровно один раз без изменений: 203.0.113.42'
+    golden_id: g-protected-ip
+    checkpoint: false
+- id: protected-units
+  suite: release
+  kind: single-turn
+  tags: [protected, units]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'Скажи, приемлема ли такая задержка, и приведи значение ровно один раз в том же виде: 250 ms'
+    golden_id: g-protected-units
+    checkpoint: false
+- id: protected-numbers
+  suite: release
+  kind: single-turn
+  tags: [protected, numbers]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'Объясни, что означает этот ответ сервиса, и назови его ровно один раз точно так же: HTTP 429'
+    golden_id: g-protected-numbers
+    checkpoint: false
+- id: protected-negation
+  suite: release
+  kind: single-turn
+  tags: [protected, negation]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'Перескажи ограничение и сохрани все отрицания ровно как есть: миграцию никогда не запускать на реплике, только на первичном узле, кроме окна обслуживания.'
+    golden_id: g-protected-negation
+    checkpoint: false
+- id: protected-ordering
+  suite: release
+  kind: single-turn
+  tags: [protected, ordering]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'Повтори порядок шагов ровно один раз, ничего не переставляя: сначала снять нагрузку, затем сделать снимок, затем восстановить.'
+    golden_id: g-protected-ordering
+    checkpoint: false
+- id: protected-nfc-nfd
+  suite: release
+  kind: single-turn
+  tags: [protected, unicode]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'В таблице два разных ключа, которые выглядят одинаково. Объясни разницу и приведи оба ровно по одному разу без нормализации: café и café'
+    golden_id: g-protected-nfc-nfd
+    checkpoint: false
+- id: protected-nbsp
+  suite: release
+  kind: single-turn
+  tags: [protected, unicode]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'Скажи, почему парсер не разбивает эту метку, и повтори её ровно один раз без замены пробела: A B'
+    golden_id: g-protected-nbsp
+    checkpoint: false
+- id: protected-zwj
+  suite: release
+  kind: single-turn
+  tags: [protected, unicode]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'Логин не находится в поиске. Объясни причину и приведи его ровно один раз без чистки невидимых символов: dev‍ops'
+    golden_id: g-protected-zwj
+    checkpoint: false
+- id: protected-confusable
+  suite: release
+  kind: single-turn
+  tags: [protected, unicode]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'Этот логин не совпадает с ожидаемым, хотя выглядит верно. Объясни причину и приведи его ровно один раз без исправления букв: аdmin'
+    golden_id: g-protected-confusable
+    checkpoint: false

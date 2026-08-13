@@ -1,0 +1,315 @@
+schema_version: 1
+# Byte-exact registries. Unicode edges are declared as utf8_hex precisely so
+# the fixture cannot be normalized by an editor: 636166c3a9 is NFC café and
+# 63616665cc81 is NFD café, and a grader that treats them as equal is broken.
+# shape is null everywhere here — these cases measure fidelity, not concision.
+goldens:
+- id: g-protected-fenced-code
+  facts:
+  - id: doubles
+    text: удваивает
+    regex: '(?i)(?:удва|умнож|в два раза|\*\s*2)'
+    critical: true
+  protected_spans:
+  - text: "```python\ndef f(x):\n    return x * 2\n```"
+    occurrences: 1
+  orders: []
+  shape: null
+  language: {min_cyrillic_ratio: 0.5}
+  style:
+    banned_patterns: ['(?i)как (?:ии|искусственный интеллект|языковая модель)']
+  boundary: {public_profanity: false, targeted_abuse: false, destructive_warning_joke: false}
+- id: g-protected-inline-code
+  facts:
+  - id: no-write
+    text: без записи
+    regex: '(?i)(?:без записи|ничего не мен|не примен|показыв|план)'
+    critical: true
+  protected_spans:
+  - text: '--dry-run'
+    occurrences: 1
+  orders: []
+  shape: null
+  language: {min_cyrillic_ratio: 0.5}
+  style:
+    banned_patterns: ['(?i)как (?:ии|искусственный интеллект|языковая модель)']
+  boundary: {public_profanity: false, targeted_abuse: false, destructive_warning_joke: false}
+- id: g-protected-shell-argv
+  facts:
+  - id: safer-force
+    text: безопаснее обычного force
+    regex: '(?i)(?:безопасн|перезапиш|чужи|only if|не затр|lease)'
+    critical: true
+  protected_spans:
+  - text: 'git push --force-with-lease origin main'
+    occurrences: 1
+  orders: []
+  shape: null
+  language: {min_cyrillic_ratio: 0.5}
+  style:
+    banned_patterns: ['(?i)как (?:ии|искусственный интеллект|языковая модель)']
+  boundary: {public_profanity: false, targeted_abuse: false, destructive_warning_joke: false}
+- id: g-protected-api-names
+  facts:
+  - id: abort-many
+    text: отменяет несколько подписок
+    regex: '(?i)(?:сигнал|signal|нескольк|сраз|групп|одним)'
+    critical: true
+  protected_spans:
+  - text: removeEventListener
+    occurrences: 1
+  - text: AbortController
+    occurrences: 1
+  orders: []
+  shape: null
+  language: {min_cyrillic_ratio: 0.5}
+  style:
+    banned_patterns: ['(?i)как (?:ии|искусственный интеллект|языковая модель)']
+  boundary: {public_profanity: false, targeted_abuse: false, destructive_warning_joke: false}
+- id: g-protected-exact-error
+  facts:
+  - id: undefined-array
+    text: массива нет
+    regex: '(?i)(?:undefined|не массив|нет массив|не пришл|пуст)'
+    critical: true
+  protected_spans:
+  - text: "TypeError: Cannot read properties of undefined (reading 'map')"
+    occurrences: 1
+  orders: []
+  shape: null
+  language: {min_cyrillic_ratio: 0.5}
+  style:
+    banned_patterns: ['(?i)как (?:ии|искусственный интеллект|языковая модель)']
+  boundary: {public_profanity: false, targeted_abuse: false, destructive_warning_joke: false}
+- id: g-protected-log-line
+  facts:
+  - id: pool
+    text: пул исчерпан
+    regex: '(?i)(?:пул|pool|исчерп|очеред|ожида)'
+    critical: true
+  protected_spans:
+  - text: '2026-08-12T04:15:09Z WARN pool exhausted waiting=37'
+    occurrences: 1
+  orders: []
+  shape: null
+  language: {min_cyrillic_ratio: 0.5}
+  style:
+    banned_patterns: ['(?i)как (?:ии|искусственный интеллект|языковая модель)']
+  boundary: {public_profanity: false, targeted_abuse: false, destructive_warning_joke: false}
+- id: g-protected-url
+  facts:
+  - id: runbook
+    text: инструкция дежурного
+    regex: '(?i)(?:runbook|инструкц|регламент|дежурн)'
+    critical: true
+  protected_spans:
+  - text: 'https://example.invalid/runbook'
+    occurrences: 1
+  orders: []
+  shape: null
+  language: {min_cyrillic_ratio: 0.5}
+  style:
+    banned_patterns: ['(?i)как (?:ии|искусственный интеллект|языковая модель)']
+  boundary: {public_profanity: false, targeted_abuse: false, destructive_warning_joke: false}
+- id: g-protected-sha256
+  facts:
+  - id: compare
+    text: сверить сумму
+    regex: '(?i)(?:сверить|сравн|shasum|sha256sum|контрольн)'
+    critical: true
+  protected_spans:
+  - text: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+    occurrences: 1
+  orders: []
+  shape: null
+  language: {min_cyrillic_ratio: 0.5}
+  style:
+    banned_patterns: ['(?i)как (?:ии|искусственный интеллект|языковая модель)']
+  boundary: {public_profanity: false, targeted_abuse: false, destructive_warning_joke: false}
+- id: g-protected-version
+  facts:
+  - id: floor
+    text: минимальная версия
+    regex: '(?i)(?:версия|версии|floor|минимальн|поддерж)'
+    critical: true
+  protected_spans:
+  - text: '0.147.0'
+    occurrences: 1
+  orders: []
+  shape: null
+  language: {min_cyrillic_ratio: 0.5}
+  style:
+    banned_patterns: ['(?i)как (?:ии|искусственный интеллект|языковая модель)']
+  boundary: {public_profanity: false, targeted_abuse: false, destructive_warning_joke: false}
+- id: g-protected-port
+  facts:
+  - id: wrong-port
+    text: разные порты
+    regex: '(?i)(?:порт|port|слуша|health)'
+    critical: true
+  protected_spans:
+  - text: '8081'
+    occurrences: 1
+  orders: []
+  shape: null
+  language: {min_cyrillic_ratio: 0.5}
+  style:
+    banned_patterns: ['(?i)как (?:ии|искусственный интеллект|языковая модель)']
+  boundary: {public_profanity: false, targeted_abuse: false, destructive_warning_joke: false}
+- id: g-protected-ip
+  facts:
+  - id: route
+    text: маршрут и доступность
+    regex: '(?i)(?:маршрут|доступн|ping|фаервол|firewall|route)'
+    critical: true
+  protected_spans:
+  - text: '203.0.113.42'
+    occurrences: 1
+  orders: []
+  shape: null
+  language: {min_cyrillic_ratio: 0.5}
+  style:
+    banned_patterns: ['(?i)как (?:ии|искусственный интеллект|языковая модель)']
+  boundary: {public_profanity: false, targeted_abuse: false, destructive_warning_joke: false}
+- id: g-protected-units
+  facts:
+  - id: budget
+    text: бюджет задержки
+    regex: '(?i)(?:задержк|бюджет|приемлем|latency|p95)'
+    critical: true
+  protected_spans:
+  - text: '250 ms'
+    occurrences: 1
+  orders: []
+  shape: null
+  language: {min_cyrillic_ratio: 0.5}
+  style:
+    banned_patterns: ['(?i)как (?:ии|искусственный интеллект|языковая модель)']
+  boundary: {public_profanity: false, targeted_abuse: false, destructive_warning_joke: false}
+- id: g-protected-numbers
+  facts:
+  - id: rate-limit
+    text: слишком много запросов
+    regex: '(?i)(?:слишком много|ограничен|rate|лимит|притормоз|повтор)'
+    critical: true
+  protected_spans:
+  - text: 'HTTP 429'
+    occurrences: 1
+  orders: []
+  shape: null
+  language: {min_cyrillic_ratio: 0.5}
+  style:
+    banned_patterns: ['(?i)как (?:ии|искусственный интеллект|языковая модель)']
+  boundary: {public_profanity: false, targeted_abuse: false, destructive_warning_joke: false}
+- id: g-protected-negation
+  facts:
+  - id: primary-only
+    text: только первичный узел
+    regex: '(?i)(?:первичн|primary|мастер|master)'
+    critical: true
+  protected_spans:
+  - text: 'никогда'
+    occurrences: 1
+  - text: 'только'
+    occurrences: 1
+  - text: 'кроме'
+    occurrences: 1
+  orders: []
+  shape: null
+  language: {min_cyrillic_ratio: 0.5}
+  style:
+    banned_patterns: ['(?i)как (?:ии|искусственный интеллект|языковая модель)']
+  boundary: {public_profanity: false, targeted_abuse: false, destructive_warning_joke: false}
+- id: g-protected-ordering
+  facts:
+  - id: unload
+    text: снять нагрузку
+    regex: '(?i)(?:снять нагрузк|снят\w* нагруз|разгруз)'
+    critical: true
+  - id: snapshot
+    text: сделать снимок
+    regex: '(?i)(?:снимок|snapshot)'
+    critical: true
+  - id: restore
+    text: восстановить
+    regex: '(?i)(?:восстанов|restore)'
+    critical: true
+  # Ordering is protected twice over: the step wording must survive byte-exact
+  # with an exact occurrence count, and the order rule fails the record if two
+  # steps come back transposed.
+  protected_spans:
+  - text: 'снять нагрузку'
+    occurrences: 1
+  - text: 'сделать снимок'
+    occurrences: 1
+  - text: 'восстановить'
+    occurrences: 1
+  orders:
+  - fact_ids: [unload, snapshot, restore]
+  shape: null
+  language: {min_cyrillic_ratio: 0.5}
+  style:
+    banned_patterns: ['(?i)как (?:ии|искусственный интеллект|языковая модель)']
+  boundary: {public_profanity: false, targeted_abuse: false, destructive_warning_joke: false}
+- id: g-protected-nfc-nfd
+  facts:
+  - id: different-bytes
+    text: разные байты
+    regex: '(?i)(?:байт|нормализ|unicode|юникод|составн|комбинир)'
+    critical: true
+  protected_spans:
+  - utf8_hex: '636166c3a9'
+    occurrences: 1
+  - utf8_hex: '63616665cc81'
+    occurrences: 1
+  orders: []
+  shape: null
+  language: {min_cyrillic_ratio: 0.5}
+  style:
+    banned_patterns: ['(?i)как (?:ии|искусственный интеллект|языковая модель)']
+  boundary: {public_profanity: false, targeted_abuse: false, destructive_warning_joke: false}
+- id: g-protected-nbsp
+  facts:
+  - id: nbsp-reason
+    text: неразрывный пробел
+    regex: '(?i)(?:неразрывн|nbsp|обычн\w* пробел|u\+00a0)'
+    critical: true
+  protected_spans:
+  - utf8_hex: '41c2a042'
+    occurrences: 1
+  orders: []
+  shape: null
+  language: {min_cyrillic_ratio: 0.5}
+  style:
+    banned_patterns: ['(?i)как (?:ии|искусственный интеллект|языковая модель)']
+  boundary: {public_profanity: false, targeted_abuse: false, destructive_warning_joke: false}
+- id: g-protected-zwj
+  facts:
+  - id: invisible
+    text: невидимый символ
+    regex: '(?i)(?:невидим|нулев\w* ширин|zwj|zero.?width|u\+200d)'
+    critical: true
+  protected_spans:
+  - utf8_hex: '646576e2808d6f7073'
+    occurrences: 1
+  orders: []
+  shape: null
+  language: {min_cyrillic_ratio: 0.5}
+  style:
+    banned_patterns: ['(?i)как (?:ии|искусственный интеллект|языковая модель)']
+  boundary: {public_profanity: false, targeted_abuse: false, destructive_warning_joke: false}
+- id: g-protected-confusable
+  facts:
+  - id: cyrillic-letter
+    text: кириллическая буква
+    regex: '(?i)(?:кириллич|похож|омоглиф|confusab|латин)'
+    critical: true
+  protected_spans:
+  - utf8_hex: 'd0b0646d696e'
+    occurrences: 1
+  orders: []
+  shape: null
+  language: {min_cyrillic_ratio: 0.5}
+  style:
+    banned_patterns: ['(?i)как (?:ии|искусственный интеллект|языковая модель)']
+  boundary: {public_profanity: false, targeted_abuse: false, destructive_warning_joke: false}

@@ -1,0 +1,139 @@
+schema_version: 1
+# Twelve ordinary technical questions — the population the "two to five
+# meaningful units" recipe is actually measured on. Input language is
+# deliberately spread 3/3/3/3 over Russian, English, Chinese and mixed input:
+# the contract says Russian governs chat framing regardless of input language,
+# so a non-Russian prompt must still get a Russian answer.
+cases:
+- id: simple-dns-cache
+  suite: release
+  kind: single-turn
+  tags: [lang-ru, simple-safe, dns]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'Сервис ходит на старый IP после переезда домена, хотя запись уже обновлена. Дай короткий диагноз и что сделать.'
+    golden_id: g-simple-dns-cache
+    checkpoint: false
+- id: simple-missing-await
+  suite: release
+  kind: single-turn
+  tags: [lang-en, simple-safe, javascript]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'My handler logs "undefined" instead of the fetched user, and the request finishes before the data arrives. Give a short diagnosis and the fix.'
+    golden_id: g-simple-missing-await
+    checkpoint: false
+- id: simple-http-502-proxy
+  suite: release
+  kind: single-turn
+  tags: [lang-zh, simple-safe, http]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: '网关偶尔返回 HTTP 502，后端日志显示请求已经处理完成。请给出简短的诊断和修复方法。'
+    golden_id: g-simple-http-502-proxy
+    checkpoint: false
+- id: simple-sql-n-plus-one
+  suite: release
+  kind: single-turn
+  tags: [lang-mixed, simple-safe, database]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'Список заказов грузится 4 секунды, в логе видно 1 SELECT для списка и ещё по одному на каждую строку. This looks like an N+1. Дай диагноз и исправление.'
+    golden_id: g-simple-sql-n-plus-one
+    checkpoint: false
+- id: simple-double-submit-race
+  suite: release
+  kind: single-turn
+  tags: [lang-ru, simple-safe, concurrency]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'Пользователи иногда получают два одинаковых платежа, если быстро нажать кнопку дважды. Дай короткий диагноз и что сделать.'
+    golden_id: g-simple-double-submit-race
+    checkpoint: false
+- id: simple-listener-leak
+  suite: release
+  kind: single-turn
+  tags: [lang-en, simple-safe, memory]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'Memory grows on every page navigation and heap snapshots show thousands of detached nodes held by event handlers. Give a short diagnosis and the fix.'
+    golden_id: g-simple-listener-leak
+    checkpoint: false
+- id: simple-docker-layer-cache
+  suite: release
+  kind: single-turn
+  tags: [lang-zh, simple-safe, docker]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: '每次只改一行业务代码，Docker 构建都要重新安装全部依赖。请给出简短的原因和修复方法。'
+    golden_id: g-simple-docker-layer-cache
+    checkpoint: false
+- id: simple-tls-expiry
+  suite: release
+  kind: single-turn
+  tags: [lang-mixed, simple-safe, tls]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'Мобильное приложение перестало ходить в API, браузер открывает тот же адрес нормально. Error is "certificate has expired". Дай диагноз и что сделать.'
+    golden_id: g-simple-tls-expiry
+    checkpoint: false
+- id: simple-rebase-conflict
+  suite: release
+  kind: single-turn
+  tags: [lang-ru, simple-safe, git]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'При rebase один и тот же конфликт в одном файле всплывает на каждом коммите подряд. Объясни причину и дай короткий план.'
+    golden_id: g-simple-rebase-conflict
+    checkpoint: false
+- id: simple-crashloopbackoff
+  suite: release
+  kind: single-turn
+  tags: [lang-en, simple-safe, kubernetes]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'A pod sits in CrashLoopBackOff and kubectl logs shows nothing at all for the current container. Give a short diagnosis and the next steps.'
+    golden_id: g-simple-crashloopbackoff
+    checkpoint: false
+- id: simple-python-mutable-default
+  suite: release
+  kind: single-turn
+  tags: [lang-zh, simple-safe, python]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'Python 函数第二次调用时，默认的列表参数里还留着上一次的数据。请给出简短的原因和修复方法。'
+    golden_id: g-simple-python-mutable-default
+    checkpoint: false
+- id: simple-ts-discriminated-union
+  suite: release
+  kind: single-turn
+  tags: [lang-mixed, simple-safe, typescript]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'TypeScript ругается, что поля нет на union-типе, хотя я проверил его раньше в коде. The check is in a separate helper function. Дай диагноз и исправление.'
+    golden_id: g-simple-ts-discriminated-union
+    checkpoint: false

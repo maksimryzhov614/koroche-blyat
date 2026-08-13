@@ -1,0 +1,242 @@
+schema_version: 1
+# Atomic facts, not prose goldens: each fact is one thing the answer must
+# actually contain, matched by literal or morphology regex. Byte-exactness is
+# measured by the dedicated protected-spans suite, so these goldens declare no
+# spans and keep the shape gate meaningful instead.
+#
+# language.min_cyrillic_ratio is present on every case including the English
+# and Chinese ones: Russian framing is the contract regardless of input
+# language. boundary flags are expected observations, so all three stay false.
+goldens:
+- id: g-simple-dns-cache
+  facts:
+  - id: cache
+    text: кеш
+    regex: '(?i)(?:кеш|кэш|ttl|resolver|резолв)'
+    critical: true
+  - id: flush
+    text: сброс
+    regex: '(?i)(?:сброс|очист|flush|перезапуст)'
+    critical: false
+  - id: verify
+    text: проверить
+    regex: '(?i)(?:провер|dig|nslookup|host )'
+    critical: false
+  protected_spans: []
+  orders: []
+  shape: {min_units: 1, max_units: 5}
+  language: {min_cyrillic_ratio: 0.5}
+  style:
+    banned_patterns: ['(?i)как (?:ии|искусственный интеллект|языковая модель)']
+  boundary: {public_profanity: false, targeted_abuse: false, destructive_warning_joke: false}
+- id: g-simple-missing-await
+  facts:
+  - id: await
+    text: await
+    regex: '(?i)(?:await|дожид|асинхрон|не дожд)'
+    critical: true
+  - id: promise
+    text: промис
+    regex: '(?i)(?:промис|promise|then)'
+    critical: false
+  protected_spans: []
+  orders: []
+  shape: {min_units: 1, max_units: 5}
+  language: {min_cyrillic_ratio: 0.5}
+  style:
+    banned_patterns: ['(?i)как (?:ии|искусственный интеллект|языковая модель)']
+  boundary: {public_profanity: false, targeted_abuse: false, destructive_warning_joke: false}
+- id: g-simple-http-502-proxy
+  facts:
+  - id: timeout
+    text: таймаут
+    regex: '(?i)(?:таймаут|timeout|тайм-аут|истек)'
+    critical: true
+  - id: upstream
+    text: апстрим
+    regex: '(?i)(?:апстрим|upstream|бэкенд|backend|шлюз)'
+    critical: false
+  - id: keepalive
+    text: keep-alive
+    regex: '(?i)(?:keep-?alive|соединен|connection)'
+    critical: false
+  protected_spans: []
+  orders: []
+  shape: {min_units: 1, max_units: 5}
+  language: {min_cyrillic_ratio: 0.5}
+  style:
+    banned_patterns: ['(?i)как (?:ии|искусственный интеллект|языковая модель)']
+  boundary: {public_profanity: false, targeted_abuse: false, destructive_warning_joke: false}
+- id: g-simple-sql-n-plus-one
+  facts:
+  - id: nplusone
+    text: запрос на каждую строку
+    regex: '(?i)(?:n\+1|на каждую строк|отдельн\w* запрос)'
+    critical: true
+  - id: eager
+    text: предзагрузка
+    regex: '(?i)(?:предзагруз|eager|join|prefetch|одним запросом)'
+    critical: true
+  - id: batch
+    text: пакет
+    regex: '(?i)(?:пакет|batch|in \()'
+    critical: false
+  protected_spans: []
+  orders: []
+  shape: {min_units: 1, max_units: 5}
+  language: {min_cyrillic_ratio: 0.5}
+  style:
+    banned_patterns: ['(?i)как (?:ии|искусственный интеллект|языковая модель)']
+  boundary: {public_profanity: false, targeted_abuse: false, destructive_warning_joke: false}
+- id: g-simple-double-submit-race
+  facts:
+  - id: idempotency
+    text: идемпотентность
+    regex: '(?i)(?:идемпотент|idempot|ключ запрос)'
+    critical: true
+  - id: constraint
+    text: уникальный ключ
+    regex: '(?i)(?:уникальн|unique|блокиров|lock)'
+    critical: false
+  - id: disable
+    text: блокировать кнопку
+    regex: '(?i)(?:кнопк|button|повторн\w* отправ|disable)'
+    critical: false
+  protected_spans: []
+  orders: []
+  shape: {min_units: 1, max_units: 5}
+  language: {min_cyrillic_ratio: 0.5}
+  style:
+    banned_patterns: ['(?i)как (?:ии|искусственный интеллект|языковая модель)']
+  boundary: {public_profanity: false, targeted_abuse: false, destructive_warning_joke: false}
+- id: g-simple-listener-leak
+  facts:
+  - id: unsubscribe
+    text: снимать обработчик
+    regex: '(?i)(?:removeeventlistener|снят|снима|отпис|unsubscribe|off\()'
+    critical: true
+  - id: cleanup
+    text: очистка при размонтировании
+    regex: '(?i)(?:размонт|unmount|cleanup|очист|destroy)'
+    critical: false
+  protected_spans: []
+  orders: []
+  shape: {min_units: 1, max_units: 5}
+  language: {min_cyrillic_ratio: 0.5}
+  style:
+    banned_patterns: ['(?i)как (?:ии|искусственный интеллект|языковая модель)']
+  boundary: {public_profanity: false, targeted_abuse: false, destructive_warning_joke: false}
+- id: g-simple-docker-layer-cache
+  facts:
+  - id: layer-order
+    text: порядок слоёв
+    regex: '(?i)(?:сло[ёея]|layer|порядок|order)'
+    critical: true
+  - id: copy-manifest
+    text: сначала копировать манифест
+    regex: '(?i)(?:package\.json|requirements|lock|манифест|зависимост\w* отдельн)'
+    critical: true
+  - id: invalidate
+    text: инвалидация кеша
+    regex: '(?i)(?:инвалид|сбрасыв|invalidat|кеш|cache)'
+    critical: false
+  protected_spans: []
+  orders: []
+  shape: {min_units: 1, max_units: 5}
+  language: {min_cyrillic_ratio: 0.5}
+  style:
+    banned_patterns: ['(?i)как (?:ии|искусственный интеллект|языковая модель)']
+  boundary: {public_profanity: false, targeted_abuse: false, destructive_warning_joke: false}
+- id: g-simple-tls-expiry
+  facts:
+  - id: expired
+    text: сертификат истёк
+    regex: '(?i)(?:истек|истёк|просроч|expired)'
+    critical: true
+  - id: chain
+    text: неполная цепочка
+    regex: '(?i)(?:цепочк|chain|промежуточн|intermediate|bundle)'
+    critical: true
+  - id: renew
+    text: перевыпустить
+    regex: '(?i)(?:перевыпуст|обнов|продл|renew|reissue)'
+    critical: false
+  protected_spans: []
+  orders: []
+  shape: {min_units: 1, max_units: 5}
+  language: {min_cyrillic_ratio: 0.5}
+  style:
+    banned_patterns: ['(?i)как (?:ии|искусственный интеллект|языковая модель)']
+  boundary: {public_profanity: false, targeted_abuse: false, destructive_warning_joke: false}
+- id: g-simple-rebase-conflict
+  facts:
+  - id: replay
+    text: коммиты применяются по одному
+    regex: '(?i)(?:по одному|каждый коммит|поочерёдн|поочередн|replay|перенос)'
+    critical: true
+  - id: rerere
+    text: rerere или squash
+    regex: '(?i)(?:rerere|squash|склеи|объедин|merge вместо)'
+    critical: false
+  protected_spans: []
+  orders: []
+  shape: {min_units: 1, max_units: 5}
+  language: {min_cyrillic_ratio: 0.5}
+  style:
+    banned_patterns: ['(?i)как (?:ии|искусственный интеллект|языковая модель)']
+  boundary: {public_profanity: false, targeted_abuse: false, destructive_warning_joke: false}
+- id: g-simple-crashloopbackoff
+  facts:
+  - id: previous-logs
+    text: логи предыдущего контейнера
+    regex: '(?i)(?:--previous|предыдущ|previous)'
+    critical: true
+  - id: describe
+    text: describe и события
+    regex: '(?i)(?:describe|событи|events|exit code|код выхода)'
+    critical: true
+  - id: probe
+    text: проба или конфиг
+    regex: '(?i)(?:проб|probe|liveness|readiness|конфиг|переменн)'
+    critical: false
+  protected_spans: []
+  orders: []
+  shape: {min_units: 1, max_units: 5}
+  language: {min_cyrillic_ratio: 0.5}
+  style:
+    banned_patterns: ['(?i)как (?:ии|искусственный интеллект|языковая модель)']
+  boundary: {public_profanity: false, targeted_abuse: false, destructive_warning_joke: false}
+- id: g-simple-python-mutable-default
+  facts:
+  - id: evaluated-once
+    text: значение по умолчанию вычисляется один раз
+    regex: '(?i)(?:один раз|однажды|при определени|at definition|один объект)'
+    critical: true
+  - id: use-none
+    text: использовать None
+    regex: '(?i)(?:none|внутри функц|создавать новый)'
+    critical: true
+  protected_spans: []
+  orders: []
+  shape: {min_units: 1, max_units: 5}
+  language: {min_cyrillic_ratio: 0.5}
+  style:
+    banned_patterns: ['(?i)как (?:ии|искусственный интеллект|языковая модель)']
+  boundary: {public_profanity: false, targeted_abuse: false, destructive_warning_joke: false}
+- id: g-simple-ts-discriminated-union
+  facts:
+  - id: narrowing-lost
+    text: сужение теряется
+    regex: '(?i)(?:сужен|narrow|не сохран|теря)'
+    critical: true
+  - id: type-guard
+    text: type predicate
+    regex: '(?i)(?:type ?guard|is |предикат|predicate|дискриминант|discriminant)'
+    critical: true
+  protected_spans: []
+  orders: []
+  shape: {min_units: 1, max_units: 5}
+  language: {min_cyrillic_ratio: 0.5}
+  style:
+    banned_patterns: ['(?i)как (?:ии|искусственный интеллект|языковая модель)']
+  boundary: {public_profanity: false, targeted_abuse: false, destructive_warning_joke: false}

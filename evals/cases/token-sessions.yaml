@@ -1,0 +1,131 @@
+schema_version: 1
+# Paired token measurement at session lengths 1, 5 and 20. These carry no
+# golden: they exist to compare token usage between arms on identical prompts,
+# and behaviour is graded by the other suites. Turns form one coherent session
+# so that later turns carry realistic context growth rather than restarting.
+cases:
+- id: token-session-01
+  suite: release
+  kind: token-session
+  tags: [token-session, length-1]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'Сервис отвечает 500 на каждый третий запрос после вчерашнего релиза. С чего начать?'
+    golden_id: null
+    checkpoint: false
+- id: token-session-05
+  suite: release
+  kind: token-session
+  tags: [token-session, length-5]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'Сервис отвечает 500 на каждый третий запрос после вчерашнего релиза. С чего начать?'
+    golden_id: null
+    checkpoint: false
+  - index: 2
+    prompt: 'В логе видно "connection reset by peer" в сторону базы. Что это означает здесь?'
+    golden_id: null
+    checkpoint: false
+  - index: 3
+    prompt: 'Пул соединений настроен на 10, реплик базы две. Это может быть причиной?'
+    golden_id: null
+    checkpoint: false
+  - index: 4
+    prompt: 'Как проверить, что дело именно в пуле, а не в сети?'
+    golden_id: null
+    checkpoint: false
+  - index: 5
+    prompt: 'Хорошо, какой минимальный безопасный шаг сделать прямо сейчас?'
+    golden_id: null
+    checkpoint: false
+- id: token-session-20
+  suite: release
+  kind: token-session
+  tags: [token-session, length-20]
+  hosts: [prime, codex, claude]
+  repetitions: 5
+  turns:
+  - index: 1
+    prompt: 'Экспорт отчётов стал падать по таймауту у части клиентов. С чего начать?'
+    golden_id: null
+    checkpoint: false
+  - index: 2
+    prompt: 'Таймаут срабатывает ровно на 30 секундах. О чём это говорит?'
+    golden_id: null
+    checkpoint: false
+  - index: 3
+    prompt: 'В метриках база отвечает за 200 ms, очередь пустая. Куда смотреть дальше?'
+    golden_id: null
+    checkpoint: false
+  - index: 4
+    prompt: 'Нашёл, что экспорт строит файл в памяти целиком. Это объясняет картину?'
+    golden_id: null
+    checkpoint: false
+  - index: 5
+    prompt: 'У крупных клиентов выгрузка под миллион строк. Что с этим делать?'
+    golden_id: null
+    checkpoint: false
+  - index: 6
+    prompt: 'Потоковая выгрузка потребует менять контракт API?'
+    golden_id: null
+    checkpoint: false
+  - index: 7
+    prompt: 'Какой формат лучше для потоковой выдачи в нашем случае?'
+    golden_id: null
+    checkpoint: false
+  - index: 8
+    prompt: 'Клиенты читают файл целиком. Как их не сломать при переходе?'
+    golden_id: null
+    checkpoint: false
+  - index: 9
+    prompt: 'Сколько времени держать старый путь параллельно с новым?'
+    golden_id: null
+    checkpoint: false
+  - index: 10
+    prompt: 'Как измерить, что новый путь действительно быстрее?'
+    golden_id: null
+    checkpoint: false
+  - index: 11
+    prompt: 'Нужен ли отдельный лимит на размер выгрузки?'
+    golden_id: null
+    checkpoint: false
+  - index: 12
+    prompt: 'Что показывать пользователю, если он упёрся в лимит?'
+    golden_id: null
+    checkpoint: false
+  - index: 13
+    prompt: 'Стоит ли выносить экспорт в фоновую задачу с уведомлением?'
+    golden_id: null
+    checkpoint: false
+  - index: 14
+    prompt: 'Где хранить готовый файл и сколько его держать?'
+    golden_id: null
+    checkpoint: false
+  - index: 15
+    prompt: 'Как не дать одному клиенту занять всю очередь экспорта?'
+    golden_id: null
+    checkpoint: false
+  - index: 16
+    prompt: 'Какие метрики завести, чтобы поймать регресс заранее?'
+    golden_id: null
+    checkpoint: false
+  - index: 17
+    prompt: 'Что писать в алерт, чтобы дежурный понял без контекста?'
+    golden_id: null
+    checkpoint: false
+  - index: 18
+    prompt: 'Нужно ли чинить старый путь или сразу выключать после перехода?'
+    golden_id: null
+    checkpoint: false
+  - index: 19
+    prompt: 'Собери короткий план перехода по шагам.'
+    golden_id: null
+    checkpoint: false
+  - index: 20
+    prompt: 'Что из этого можно сделать сегодня, а что требует согласования?'
+    golden_id: null
+    checkpoint: false
