@@ -9,3 +9,6 @@ __pycache__/
 dist/
 evals/snapshots/*
 !evals/snapshots/.gitkeep
+
+# негодные захваты не являются доказательством
+evals/baselines/INVALID-*/
