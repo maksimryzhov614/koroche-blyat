@@ -1,0 +1,43 @@
+schema_version: 1
+
+upstreams:
+  - id: caveman
+    repository: https://github.com/JuliusBrussee/caveman
+    tag: null
+    commit: 099327780ef69ad88c4cfc15c54314579ac367a4
+    license: MIT-for-skills
+    distributed: true
+    sources:
+      - path: skills/caveman/SKILL.md
+        sha256: daf9cec496ebd039809d8236f99f17fa1b4beaadf8ce4e2d532d0da51d70afce
+        use: adapted
+      - path: LICENSE
+        sha256: 1cd9aa70ec104afb3b0d2dc2e5343230f74737dc01fdc8dad585c9da6449d5a5
+        use: redistributed
+        redistributed_as: skills/koroche-blyat/licenses/caveman-MIT.txt
+
+  - id: pohuy
+    repository: https://github.com/smixs/pohuy
+    tag: null
+    commit: cac2698fae1260347d3d8c7efbc1bee98e041f6d
+    license: MIT
+    distributed: true
+    sources:
+      - path: skills/pohuy/SKILL.md
+        sha256: 1ca42e7d65251c331eb2bb30bad744306b9b85fac34db05e96daf4ba024f1663
+        use: adapted
+      - path: LICENSE
+        sha256: 27cd410525efac04b5fc0706333cbf92fcc7cefc246d5be33a3e1c77ace71205
+        use: redistributed
+        redistributed_as: skills/koroche-blyat/licenses/pohuy-MIT.txt
+
+  - id: russian-swears-excluded
+    repository: https://github.com/nickname76/russian-swears
+    tag: null
+    commit: 5be4828435629f9e5f966cde5b54d2eb2a5ba7e7
+    license: NOASSERTION
+    distributed: false
+    sources:
+      - path: README.md
+        sha256: ed5e474e94dfdd8a37626e0d030988f049fbfff0de1e1aa7190bd6db5c66628f
+        use: excluded-clean-room-evidence
