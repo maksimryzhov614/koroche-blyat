@@ -159,6 +159,29 @@ def test_empty_output_is_an_infrastructure_error(host):
         parse_events(host, "")
 
 
+def test_a_transcript_without_an_answer_is_rejected_even_though_it_is_not_empty():
+    """Length is not proof of an answer.
+
+    The preflight probe originally accepted any non-empty stdout. In JSON mode
+    a stream can carry session and turn events and no assistant message at
+    all, so a probe measuring only length would wave that through into a full
+    capture. The probe now reads through this parser.
+    """
+    stream = '{"type":"session","id":"x"}\n{"type":"turn_start"}\n'
+    assert stream.strip()
+    with pytest.raises(HostEventError):
+        parse_events("prime", stream)
+
+
+def test_an_assistant_turn_with_blank_text_is_rejected():
+    stream = json.dumps({
+        "type": "turn_end",
+        "message": {"role": "assistant", "content": [{"type": "text", "text": "   "}]},
+    }) + "\n"
+    with pytest.raises(HostEventError):
+        parse_events("prime", stream)
+
+
 # --- subprocess control ------------------------------------------------------
 
 def _expected(host):

@@ -191,14 +191,25 @@ def smoke_check(
             return False, "smoke call failed to run: %s" % exc
     if result.returncode != 0:
         return False, "smoke call exited %d" % result.returncode
-    text = bytes(result.stdout).decode("utf-8", errors="replace").strip()
-    if not text:
+    raw = bytes(result.stdout).decode("utf-8", errors="replace").strip()
+    if not raw:
         return False, (
             "smoke call produced no output with exit 0; the host is not "
             "answering under these flags, so the capture would record silence "
             "as data"
         )
-    return True, text[:120]
+    # Parse with the same reader the capture uses. A non-empty transcript is
+    # not proof of an answer: the JSON stream can carry session and turn events
+    # and no assistant message at all, and a probe that only measured length
+    # would wave that through into a full capture.
+    from evals.host_runners import HostEventError, parse_events
+    try:
+        answer = parse_events("prime", raw)["text"]
+    except HostEventError as error:
+        return False, "smoke transcript is unreadable: %s" % error
+    if not answer.strip():
+        return False, "smoke transcript carried no answer text"
+    return True, answer.strip().replace("\n", " ")[:120]
 
 
 def _run_live(args: argparse.Namespace, cases: Sequence[Case], plans: Sequence[Mapping[str, Any]]) -> int:
