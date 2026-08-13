@@ -32,6 +32,14 @@ The authors listed below are not affiliated with koroche-blyat.
 - License: MIT; see `skills/koroche-blyat/licenses/pohuy-MIT.txt`
 - Commit: `cac2698fae1260347d3d8c7efbc1bee98e041f6d`
 - Use: nominative attribution only.
+- Known limitation: the upstream README states that its lexicon integrates
+  material from the unlicensed `nickname76/russian-swears` dictionary. An MIT
+  grant cannot cover material the grantor does not own, so this project treats
+  Pohuy as an MIT source for its structure and naming only, and never as a
+  source of lexicon content. Only the upstream LICENSE text is redistributed
+  here; no Pohuy prose, dictionary entry, definition or example is copied.
+  Every lexicon item in `skills/koroche-blyat/references/slovar.md` was
+  authored independently, which is why this limitation does not propagate.
 
 ### russian-swears — nickname76 (excluded)
 

@@ -16,6 +16,11 @@ upstreams:
         use: redistributed
         redistributed_as: skills/koroche-blyat/licenses/caveman-MIT.txt
 
+  # Ограничение: README апстрима сообщает, что его словарь вобрал материал из
+  # несвободного nickname76/russian-swears. MIT не покрывает то, чем автор не
+  # владеет, поэтому pohuy используется как источник структуры и наименований,
+  # но никогда как источник словарного содержимого. Распространяется только
+  # текст его лицензии.
   - id: pohuy
     repository: https://github.com/smixs/pohuy
     tag: null
