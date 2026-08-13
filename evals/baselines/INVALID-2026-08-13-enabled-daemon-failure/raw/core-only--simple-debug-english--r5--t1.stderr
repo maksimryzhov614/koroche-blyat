@@ -1,0 +1,12 @@
+file:///opt/homebrew/lib/node_modules/prime-agent/dist/bundle/chunk-PMFPRFOT.js:12190
+    socket.on("close", () => this.notifyClosed(socket, new DaemonSocketClosedError(this.socketPath, this.daemonClosingReason)));
+                                                       ^
+
+DaemonSocketClosedError: Connection to the Prime Agent daemon closed. Socket: /var/folders/8y/f6g8n8dd7x1dw4x1j2drbfn00000gn/T/prime-agent-501/daemon.sock. Daemon log: /var/folders/8y/f6g8n8dd7x1dw4x1j2drbfn00000gn/T/koroche-blyat-home-2_eab0dw/.prime/agent/logs/daemon.sock.6296977e.log.
+    at Socket.<anonymous> (file:///opt/homebrew/lib/node_modules/prime-agent/dist/bundle/chunk-PMFPRFOT.js:12190:56)
+    at Socket.emit (node:events:509:20)
+    at Pipe.<anonymous> (node:net:350:12) {
+  daemonClosingReason: undefined
+}
+
+Node.js v26.3.0

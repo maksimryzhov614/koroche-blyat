@@ -17,9 +17,9 @@ REMINDER = "Контракт koroche-blyat остаётся активен: со
 REQUIRED_REFERENCES = ("compression.md", "slovar.md", "sceny.md", "ontologia.md")
 EXPECTED_FRONTMATTER = {
     "name": "koroche-blyat",
-    "description": "Use when producing any response after installation, especially concise Russian technical chat, debugging, review, operations, and incident work where idiomatic engineering humor is appropriate.",
+    "description": "Use for Russian-language technical work - debugging, review, operations, incident response, and ordinary engineering chat - to answer in a concise idiomatic Russian engineering voice while keeping code, commits, documentation and every other persisted artifact clean.",
     "license": "MIT; see LICENSE.txt and NOTICE.md",
-    "compatibility": "Always-on adapters target Prime Agent 0.7.1+, Codex CLI 0.147.0+, and Claude Code 2.1.197+.",
+    "compatibility": "Works as a plain Agent Skill; optional adapters make it always-on in Prime Agent 0.7.1+, Codex CLI 0.147.0+, and Claude Code 2.1.197+.",
     "metadata": {"version": "1.0.0"},
 }
 _LINK_RE = re.compile(r"\[[^]]+\]\(([^)]+)\)")

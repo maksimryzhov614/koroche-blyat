@@ -1,4 +1,4 @@
-canonical-sha256: 6a7e3a118d2fe2012e8e7736c8ee1bec768953660eb4183e77d2ae389c53cd18
+canonical-sha256: 43cf5b31ec6c0167ecd1be94833d2f3e1faed53a415e0058948f604ff32f2fc3
 
 
 ## Приоритеты (от высшего к низшему)
