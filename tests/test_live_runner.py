@@ -121,6 +121,20 @@ def test_pinned_fixtures_parse_into_normalized_usage(host):
     assert parsed["input_tokens"] > 0
 
 
+def test_prime_fixture_is_a_real_capture_not_an_invention():
+    """The Prime fixture must carry the event shape the host actually emits.
+
+    An earlier version of this file used session_start/assistant_message/usage,
+    which Prime 0.7.2 never emits, so every test here passed against fiction.
+    """
+    types = {
+        json.loads(line)["type"]
+        for line in FIXTURES["prime"].read_text(encoding="utf-8").splitlines() if line.strip()
+    }
+    assert {"session", "turn_end", "agent_end"} <= types
+    assert "assistant_message" not in types
+
+
 def test_claude_cache_fields_map_to_the_normalized_names():
     parsed = parse_events("claude", FIXTURES["claude"].read_text(encoding="utf-8"))
     assert parsed["cache_read_tokens"] == 32
@@ -147,15 +161,26 @@ def test_empty_output_is_an_infrastructure_error(host):
 
 # --- subprocess control ------------------------------------------------------
 
+def _expected(host):
+    """Expectations come from the fixture, never from a hand-written constant.
+
+    The first version of this suite asserted invented numbers against an
+    invented Prime fixture, so it passed while the parser could not read a
+    single real transcript.
+    """
+    return parse_events(host, FIXTURES[host].read_text(encoding="utf-8"))
+
+
 @pytest.mark.parametrize("host", sorted(FIXTURES))
 def test_run_host_executes_the_fake_binary_and_records_usage(tmp_path, host):
     environment = _environment(tmp_path, host)
     argv = build_argv(host, "prompt", CONFIG)
     argv[0] = str(FAKE_BIN / BINARIES[host])
     result = run_host(host, argv, environment, tmp_path, 20)
+    expected = _expected(host)
     assert result.exit_code == 0
-    assert result.output_tokens > 0
-    assert "8080" in result.text
+    assert result.output_tokens == expected["output_tokens"] > 0
+    assert result.text == expected["text"]
 
 
 def test_argv_reaches_the_host_exactly_as_built(tmp_path):
@@ -296,7 +321,8 @@ def test_full_run_against_fake_hosts_records_every_call(tmp_path):
     ]
     assert manifest["expected"] == manifest["recorded"] == len(records) == 26
     assert manifest["failures"] == 0
-    assert all(record["output_tokens"] == 18 for record in records)
+    expected = _expected("prime")
+    assert all(record["output_tokens"] == expected["output_tokens"] for record in records)
     assert all(record["seed"] is None for record in records)
 
 

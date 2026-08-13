@@ -41,6 +41,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--seed", type=int)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--confirm-live", action="store_true")
+    parser.add_argument("--skip-smoke", action="store_true",
+                        help="skip the preflight probe (only for tests)")
     return parser
 
 
@@ -91,13 +93,26 @@ def _plans(cases: Sequence[Case], arms: Sequence[str], repetitions: int) -> Tupl
 
 def _command(
     executable: str, prompt: str, arm: str, provider: Optional[str], model: Optional[str],
-    root: Path, cwd: Path,
+    root: Path, cwd: Path, daemon_socket: Optional[Path] = None,
 ) -> Tuple[str, ...]:
+    # JSON event output instead of --print: --print concatenates the agent's
+    # spoken plan with its answer, and 13% of the 2026-08-12 baseline begins
+    # with a preamble like "Сначала быстро найду место, где падает map".
+    # The shape gate then counts the plan as part of the answer, so it grades
+    # something the contract never promised. The JSON stream separates the
+    # final assistant message, and it also carries token usage, which the
+    # text mode never provided at all.
     command = [
-        executable, "--print", "--no-session", "--no-tools", "--no-extensions",
-        "--no-skills", "--no-prompt-templates", "--no-themes", "--no-context-files",
-        "--cwd", str(cwd),
+        executable, "--mode", "json", "-p", "--no-session", "--no-tools",
+        "--no-extensions", "--no-skills", "--no-prompt-templates", "--no-themes",
+        "--no-context-files", "--cwd", str(cwd),
     ]
+    if daemon_socket is not None:
+        # Isolating PRIME_AGENT_CODING_AGENT_DIR alone is not isolation: every
+        # call still reaches the one shared daemon socket under TMPDIR, so a
+        # capture competes with the developer's own daemon and with itself.
+        # That is what silently emptied 43 of 190 responses in an earlier run.
+        command.extend(("--daemon-socket", str(daemon_socket)))
     policy = _policy(arm, root)
     if policy is not None:
         command.extend(("--system-prompt", policy))
@@ -147,6 +162,45 @@ def _partial_path(output: Path) -> Path:
     return output.with_name(".%s.partial" % output.name)
 
 
+SMOKE_PROMPT = "Ответь одним словом: готов."
+
+
+def smoke_check(
+    executable: str, arm: str, provider: Optional[str], model: Optional[str], root: Path
+) -> Tuple[bool, str]:
+    """Spend one call to prove the environment answers before spending the matrix.
+
+    Twice this runner burned a full 190-call capture into a host that returned
+    nothing: once because the daemon was gone, once because the flag
+    combination silently produced empty output with exit 0. Both were only
+    visible after the money was spent. One probe with the exact command shape
+    of the real run makes that failure cost a single call.
+    """
+    with tempfile.TemporaryDirectory(prefix="koroche-blyat-smoke-") as home_name, \
+            tempfile.TemporaryDirectory(prefix="koroche-blyat-smoke-cwd-") as cwd_name:
+        command = _command(
+            executable, SMOKE_PROMPT, arm, provider, model,
+            root, Path(cwd_name), Path(home_name) / "daemon.sock",
+        )
+        try:
+            result = subprocess.run(
+                command, env=_prepare_environment(Path(home_name)), check=False,
+                capture_output=True, timeout=180,
+            )
+        except subprocess.SubprocessError as exc:
+            return False, "smoke call failed to run: %s" % exc
+    if result.returncode != 0:
+        return False, "smoke call exited %d" % result.returncode
+    text = bytes(result.stdout).decode("utf-8", errors="replace").strip()
+    if not text:
+        return False, (
+            "smoke call produced no output with exit 0; the host is not "
+            "answering under these flags, so the capture would record silence "
+            "as data"
+        )
+    return True, text[:120]
+
+
 def _run_live(args: argparse.Namespace, cases: Sequence[Case], plans: Sequence[Mapping[str, Any]]) -> int:
     if args.host != "prime":
         raise RunnerError("live host is not implemented: %s" % args.host)
@@ -166,6 +220,13 @@ def _run_live(args: argparse.Namespace, cases: Sequence[Case], plans: Sequence[M
     output = _partial_path(final_output)
     if final_output.exists() or output.exists():
         raise RunnerError("output and partial paths must not exist before immutable capture: %s" % final_output)
+    if not getattr(args, "skip_smoke", False):
+        arms = sorted({planned["arm"] for planned in plans})
+        for arm in arms:
+            healthy, detail = smoke_check(executable, arm, args.provider, args.model, root)
+            if not healthy:
+                raise RunnerError("preflight smoke failed for arm %s: %s" % (arm, detail))
+            sys.stderr.write("smoke ok (%s): %s\n" % (arm, detail))
     records = []
     for planned in plans:
         case = by_case[planned["case_id"]]
@@ -176,7 +237,7 @@ def _run_live(args: argparse.Namespace, cases: Sequence[Case], plans: Sequence[M
         with tempfile.TemporaryDirectory(prefix="koroche-blyat-home-") as home_name, tempfile.TemporaryDirectory(prefix="koroche-blyat-cwd-") as cwd_name:
             command = _command(
                 executable, turn.prompt, planned["arm"], args.provider, args.model,
-                root, Path(cwd_name),
+                root, Path(cwd_name), Path(home_name) / "daemon.sock",
             )
             started = time.monotonic()
             try:
@@ -198,10 +259,36 @@ def _run_live(args: argparse.Namespace, cases: Sequence[Case], plans: Sequence[M
         stderr_path = "raw/%s.stderr" % identity
         _atomic_write(output / stdout_path, stdout)
         _atomic_write(output / stderr_path, stderr)
+        usage = {}
         try:
-            text = stdout.decode("utf-8")
+            raw_text = stdout.decode("utf-8")
         except UnicodeDecodeError:
-            text = stdout.decode("utf-8", errors="replace")
+            raw_text = stdout.decode("utf-8", errors="replace")
+            infrastructure_error = True
+        text = raw_text
+        if not infrastructure_error and raw_text.strip():
+            from evals.host_runners import HostEventError, parse_events
+            try:
+                parsed = parse_events("prime", raw_text)
+                text = parsed["text"]
+                usage = {
+                    "input_tokens": parsed.get("input_tokens"),
+                    "cache_read_tokens": parsed.get("cache_read_tokens"),
+                    "cache_write_tokens": parsed.get("cache_write_tokens"),
+                    "output_tokens": parsed.get("output_tokens"),
+                    "total_tokens": parsed.get("total_tokens"),
+                }
+            except HostEventError as error:
+                # A transcript this runner cannot read is infrastructure, not a
+                # zero-length answer.
+                infrastructure_error = True
+                text = ""
+                usage = {}
+                stderr = stderr + ("\nparse error: %s\n" % error).encode("utf-8")
+        if not text.strip():
+            # Exit 0 with no output is not a zero-token answer, it is a failed
+            # call. Recording it as a valid empty response hides the failure
+            # from every downstream gate and biases any comparison.
             infrastructure_error = True
         response_sha = _sha256(stdout)
         records.append({
@@ -212,8 +299,11 @@ def _run_live(args: argparse.Namespace, cases: Sequence[Case], plans: Sequence[M
             "policy_sha256": None if _policy(planned["arm"], root) is None else _sha256(_policy(planned["arm"], root).encode("utf-8")),
             "seed": args.seed, "session_id": None, "session_length": 1, "prompt": turn.prompt,
             "prompt_sha256": planned["prompt_sha256"], "response_sha256": response_sha,
-            "input_tokens": None, "cache_read_tokens": None, "cache_write_tokens": None,
-            "output_tokens": None, "total_tokens": None, "exit_code": exit_code,
+            "input_tokens": usage.get("input_tokens"),
+            "cache_read_tokens": usage.get("cache_read_tokens"),
+            "cache_write_tokens": usage.get("cache_write_tokens"),
+            "output_tokens": usage.get("output_tokens"),
+            "total_tokens": usage.get("total_tokens"), "exit_code": exit_code,
             "duration_ms": duration_ms, "stdout_path": stdout_path, "stderr_path": stderr_path,
             "runner_git_sha": runner_git_sha, "schema_version": _SCHEMA_VERSION,
             "grader_version": _GRADER_VERSION,

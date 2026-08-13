@@ -126,17 +126,28 @@ def prepare_environment(base: Mapping[str, str], home: Path) -> Dict[str, str]:
     return environment
 
 
-def _usage_from_prime(events: Sequence[Mapping[str, object]]) -> Dict[str, Optional[int]]:
-    for event in events:
-        if event.get("type") == "usage":
-            return {
-                "input_tokens": event.get("input_tokens"),
-                "cache_read_tokens": event.get("cache_read_tokens"),
-                "cache_write_tokens": event.get("cache_write_tokens"),
-                "output_tokens": event.get("output_tokens"),
-                "total_tokens": event.get("total_tokens"),
-            }
-    raise HostEventError("prime emitted no usage event")
+def _prime_text(message: Mapping[str, object]) -> str:
+    content = message.get("content")
+    if isinstance(content, str):
+        return content
+    parts = []
+    for item in content or ():
+        if isinstance(item, dict) and item.get("type") == "text":
+            parts.append(str(item.get("text", "")))
+    return "".join(parts)
+
+
+def _usage_from_prime(message: Mapping[str, object]) -> Dict[str, Optional[int]]:
+    # Captured from Prime 0.7.2 rather than assumed: usage rides on the
+    # assistant message of turn_end/agent_end and uses camelCase keys.
+    usage = message.get("usage") or {}
+    return {
+        "input_tokens": usage.get("input"),
+        "cache_read_tokens": usage.get("cacheRead"),
+        "cache_write_tokens": usage.get("cacheWrite"),
+        "output_tokens": usage.get("output"),
+        "total_tokens": usage.get("totalTokens"),
+    }
 
 
 def parse_events(host: str, stdout: str) -> Dict[str, object]:
@@ -164,14 +175,30 @@ def parse_events(host: str, stdout: str) -> Dict[str, object]:
         raise HostEventError("%s emitted an unreadable transcript: %s" % (host, error))
 
     if host == "prime":
-        messages = [event.get("text") for event in events if event.get("type") == "assistant_message"]
-        if not messages:
-            raise HostEventError("prime emitted no assistant message")
-        session = next(
-            (event.get("session_id") for event in events if event.get("type") == "session_start"), None
-        )
-        result = {"text": messages[-1], "session_id": session}
-        result.update(_usage_from_prime(events))
+        # The final assistant message only. --print concatenates the agent's
+        # spoken plan with its answer; the event stream keeps them apart, and
+        # the plan is not what the shape gate is meant to grade.
+        message = None
+        for event in events:
+            if event.get("type") in ("turn_end", "agent_end"):
+                candidate = event.get("message")
+                if candidate is None:
+                    messages = event.get("messages") or []
+                    candidate = messages[-1] if messages else None
+                if isinstance(candidate, dict) and candidate.get("role") == "assistant":
+                    message = candidate
+        if message is None:
+            raise HostEventError("prime emitted no assistant turn")
+        answer = _prime_text(message)
+        if not answer.strip():
+            raise HostEventError("prime assistant message carried no text")
+        result = {
+            "text": answer,
+            "session_id": next(
+                (event.get("id") for event in events if event.get("type") == "session"), None
+            ),
+        }
+        result.update(_usage_from_prime(message))
         return result
 
     if host == "codex":
