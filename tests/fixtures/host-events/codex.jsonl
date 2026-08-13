@@ -1,0 +1,3 @@
+{"type":"thread.started","thread_id":"th_2222222222"}
+{"type":"item.completed","item":{"type":"agent_message","text":"Порт перепутан: сервис на 8080, проверка на 8081."}}
+{"type":"turn.completed","usage":{"input_tokens":131,"cached_input_tokens":64,"output_tokens":21}}
