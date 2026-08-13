@@ -1,0 +1,6 @@
+{
+  "hooks": {
+    "UserPromptSubmit": []
+  },
+  "keep": "yes"
+}

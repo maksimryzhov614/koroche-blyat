@@ -1,0 +1,6 @@
+{
+ "hooks": {"UserPromptSubmit": [
+   {"hooks":[{"type":"command","command":"keep","timeout":1}]}
+   , {"hooks":[{"type":"command","command":"other","timeout":2}]}
+ ]}
+}
