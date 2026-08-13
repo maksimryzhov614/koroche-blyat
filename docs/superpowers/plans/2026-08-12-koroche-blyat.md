@@ -967,11 +967,18 @@ Expected: PASS.
 Commit:
 
 ```bash
-git add install.sh scripts/install.py scripts/installer \
+git add install.sh scripts/install.py \
+  scripts/installer/__init__.py scripts/installer/model.py \
+  scripts/installer/patch_text.py scripts/installer/patch_json.py \
   tests/test_installer_cli.py tests/test_patch_text.py tests/test_patch_json.py \
   tests/fixtures/config
 git commit -m "feat: add safe installer patch primitives"
 ```
+
+List the four modules explicitly. Adding the `scripts/installer` directory
+sweeps in the Task 8 and Task 9 modules before their own commits, and
+`scripts/install.py` imports them at module level, so a directory-wide add
+makes this commit and the next one impossible to run in isolation.
 
 ### Task 8: Add ownership manifests and host-specific install plans
 
@@ -1263,6 +1270,12 @@ Test deletion, substitution, normalization, duplication, profanity added outside
 
 Create at least thirty labeled good/bad JSONL examples spanning idiom fit, morphology, severity, targeted abuse, safety, fact coverage, and over-compression. No live judge is a release authority until it reaches at least 0.90 agreement and detects every hard-safety negative in this calibration set.
 
+The 0.90 threshold is dead weight unless something measures it: no task in this
+plan runs a judge. Either add an explicit step that scores a judge against this
+set and records the agreement, or drop the threshold and state that release
+grading is deterministic only and the calibration set exists for future work.
+Do not leave a numeric bar that nothing evaluates.
+
 - [ ] **Step 6: Verify and commit**
 
 Run:
@@ -1519,7 +1532,9 @@ Expected: PASS.
 
 - [ ] **Step 5: Write fail-closed package tests**
 
-`release/PACKAGE_FILES.txt` is a sorted, explicit one-path-per-line allowlist with no globs. Tests reject missing/extra allowlist entries, symlinks/devices/traversal/casefold collisions, non-UTF-8/CRLF text, unexpected executable bits, `.DS_Store`, caches, secrets, logos/media, and any path segment `engine`, `proxy`, `mcp`, `shrink`, `browse`, `mem`, `cacheengine`, or `shared/platform`.
+`release/PACKAGE_FILES.txt` is a sorted, explicit one-path-per-line allowlist with no globs. Ship a `--regenerate` mode that rewrites it from the shipped trees so adding a file is one reviewed command rather than a hand edit plus a red test; the allowlist stays fail-closed either way, because regeneration is explicit and its diff is reviewable.
+
+The `docs-claims` check must treat an absent public document as clean. This task runs `scripts.validate` and expects PASS, while `README.md` and `CHANGELOG.md` are only created in Task 14, so requiring their presence here makes Step 4 unreachable. Tests reject missing/extra allowlist entries, symlinks/devices/traversal/casefold collisions, non-UTF-8/CRLF text, unexpected executable bits, `.DS_Store`, caches, secrets, logos/media, and any path segment `engine`, `proxy`, `mcp`, `shrink`, `browse`, `mem`, `cacheengine`, or `shared/platform`.
 
 Build twice under one `SOURCE_DATE_EPOCH` and assert byte-identical `.tar.gz`, `.zip`, and sorted lowercase `SHA256SUMS`. Archive prefix is `koroche-blyat-1.0.0/`; uid/gid are zero; files are `0644` except `install.sh` and the two hook scripts at `0755`.
 
@@ -1811,6 +1826,41 @@ git commit -m "chore: prepare koroche-blyat 1.0.0"
 ```
 
 Do not tag or publish automatically during plan execution. Present the verified commit and draft-release evidence for explicit human approval first.
+
+## Execution Tracks and Inference Budget
+
+The tasks form two tracks that only need to meet at the end. Running them as
+one chain is what stalls execution: the behaviour track is gated behind paid
+inference, and sequencing the packaging work behind it leaves finished code
+uncommitted for no reason.
+
+- **Behaviour track:** Task 2 → 3 → 10 → 11 → 12. Gated by live authorization.
+- **Packaging track:** Task 4 → 5 → 6 → 7 → 8 → 9 → 13 → 15. Fully offline.
+- **Join:** Task 16 consumes both.
+
+Task 14 must precede Task 15: Task 15 modifies `CHANGELOG.md`, which Task 14
+creates.
+
+Every task that spends inference states its call budget before it starts.
+Approximate counts at the fixed corpus size:
+
+| Step | Calls | Note |
+| --- | --- | --- |
+| Task 2 Step 5 | 190 | 19 cases × 2 arms × 5 repetitions |
+| Task 3 Step 8 | 190 | core-only and full-skill arms |
+| Task 12 Step 5 | ≥ 450 | 5 arms × 3 hosts × token sessions |
+| Task 16 Step 4 | ≈ 1650 | release matrix × 3 hosts × 2 arms × 5 repetitions |
+
+Persistence cases are the expensive outlier: checkpoints at turns 1, 10, 50 and
+100 imply hundred-turn sessions, so four cases at five repetitions cost about
+2000 turns per host. Treat `_REQUIRED_CHECKPOINTS` as a per-suite setting with
+a cheap `(1, 5, 20)` profile for development and the full profile reserved for
+acceptance; hardcoding the full profile in the loader makes any cheaper run
+impossible.
+
+State the total budget and obtain explicit authorization before the first paid
+call. If the budget is unavailable, the offline work still completes and the
+documentation says no percentage is claimed.
 
 ## Execution Handoff
 
