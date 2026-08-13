@@ -1,0 +1,8 @@
+{
+  "name": "koroche-blyat",
+  "version": "1.0.0",
+  "description": "Русский инженерный голос: живой тон в разговоре, чистые коммиты и артефакты, калибровка по тяжести инцидента. 18+",
+  "author": {"name": "Koroche Blyat contributors"},
+  "homepage": "https://github.com/maksimryzhov614/koroche-blyat",
+  "license": "MIT"
+}

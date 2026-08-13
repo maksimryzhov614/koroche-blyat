@@ -1,3 +1,0 @@
-# User
-
-Keep this.
